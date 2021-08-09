@@ -32,7 +32,7 @@ impl AgcMemType for AgcRom {
             );
             return 0x0;
         }
-        (self.banks[bank_idx][bank_offset] & 0x7FFF)
+        self.banks[bank_idx][bank_offset] & 0x7FFF
     }
 
     fn write(&mut self, bank_idx: usize, bank_offset: usize, value: u16) {
