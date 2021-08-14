@@ -6,10 +6,7 @@ edition = "2018"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-log = {}
-env_logger = {}
-crossbeam-channel = {}
+log = "0.4"
+env_logger = "0.8.4"
+crossbeam-channel = "0.5"
 clap = "2.33.3"
-zmq = "0.9"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"

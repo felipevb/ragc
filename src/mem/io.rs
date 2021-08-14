@@ -335,6 +335,7 @@ impl AgcIoSpace {
             CHANNEL_SUPERBNK => self.io_mem[channel_idx] = val & 0o00160,
             CHANNEL_CHAN13 => {
                 self.dsky.set_channel_value(CHANNEL_CHAN13, val);
+                self.downrupt.write(CHANNEL_CHAN13, val);
                 self.io_mem[CHANNEL_CHAN13] = val;
             }
             CHANNEL_CHAN32 => {

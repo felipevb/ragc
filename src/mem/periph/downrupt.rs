@@ -1,15 +1,38 @@
-use serde::{Deserialize, Serialize};
-use zmq;
+use crate::utils::generate_yaagc_packet;
+
+use crossbeam_channel::{Sender, Receiver, unbounded};
+use std::io::Write;
+use std::net::TcpListener;
 
 pub struct DownruptPeriph {
-    state: [u16; 200],
-    current_idx: usize,
-    socket: zmq::Socket,
+    tx: Sender<[u8; 4]>
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-struct DownruptMessage {
-    state: Vec<u16>,
+fn downrupt_thread(rx: Receiver<[u8; 4]>) {
+    // accept connections and process them serially
+    let listener = TcpListener::bind("127.0.0.1:19800").unwrap();
+    for stream in listener.incoming() {
+        match stream {
+            Ok(mut xa) => {
+                loop {
+                    let msg = match rx.recv() {
+                        Ok(x) => x,
+                        _ => {
+                            break;
+                        }
+                    };
+
+                    match xa.write(&msg) {
+                        Ok(_x) => {}
+                        _ => {
+                            break;
+                        }
+                    }
+                }
+            }
+            _ => {}
+        };
+    }
 }
 
 ///
@@ -23,28 +46,12 @@ struct DownruptMessage {
 ///
 impl DownruptPeriph {
     pub fn new() -> Self {
-        let context = zmq::Context::new();
-        let socket = context.socket(zmq::PUB).unwrap();
-        let _res = socket.bind("tcp://127.0.0.1:81969");
+        let (tx, rx) = unbounded();
 
+        std::thread::spawn(move || downrupt_thread(rx));
         DownruptPeriph {
-            state: [0; 200],
-            current_idx: 0,
-            socket: socket,
+            tx: tx
         }
-    }
-
-    ///
-    /// Function is responsible for sending ZMQ messages of the current downrupt
-    /// state vector. This is done via serde and zmq
-    ///
-    ///
-    fn send_downrupt_state(&self) {
-        let msg = DownruptMessage {
-            state: self.state.to_vec(),
-        };
-        let data = serde_json::to_string(&msg).unwrap();
-        self.socket.send(&data, 0).unwrap();
     }
 
     ///
@@ -64,66 +71,8 @@ impl DownruptPeriph {
     ///
     /// Assumption: Code does not write to DOWNRUPT2 before DOWNRUPT1 word
     ///
-    pub fn write(&mut self, _channel_idx: usize, value: u16) {
-        self.state[self.current_idx] = value;
-        self.current_idx += 1;
-        if self.current_idx >= 200 {
-            self.current_idx = 0;
-            self.send_downrupt_state();
-        }
-    }
-}
-
-#[cfg(test)]
-mod downrupt_unittest {
-    #[test]
-    ///
-    /// # Description
-    ///
-    /// Test that the downrupt peripherial functions properly. For the Downrupt
-    /// peripherial to work, the following should happen
-    ///   - After 200 Word writes to the Downrupt message, a ZMQ message is sent
-    ///     out via the publisher.
-    ///
-    fn test_message_sent() {
-        let mut drupt = super::DownruptPeriph::new();
-
-        // Setup Listener to ensure a message has shown up after we test the
-        // Downrupt actually sends a message.
-        let ctx = zmq::Context::new();
-        let socket = ctx.socket(zmq::SUB).unwrap();
-        let mut _res = socket.set_subscribe(b"");
-
-        // Connect to the peripherial ZMQ bus. This will allow us to subscribe
-        // to downrupt messages that should come in every 2 seconds.
-        match socket.connect("tcp://127.0.0.1:81969") {
-            Err(_x) => {
-                panic!("Unable to connect to peripherial");
-            }
-            _ => {}
-        };
-
-        // Induce a sleep to allow the threads for ZMQ to sync up and connect
-        // properly so we can get Downrupt messages.
-        std::thread::sleep(std::time::Duration::new(0, 1000000));
-
-        // Generate a Downrupt Message on ZMQ by filling up the Downrupt state
-        // table. A complete downrupt is sent over the course of 2 seconds. (2
-        // words every 20ms). In reality, the message is sent over in 2 word
-        // chunks in the radar.
-        for i in 0..200 {
-            drupt.write(0, i);
-        }
-
-        let mut msg = zmq::Message::new();
-        match socket.recv(&mut msg, 0) {
-            Ok(_x) => {
-                let a = msg.as_str().unwrap();
-                let _dmsg: super::DownruptMessage = serde_json::from_str(a).unwrap();
-            }
-            Err(_x) => {
-                panic!("Unable to recv message from Downrupt peripherial.");
-            }
-        };
+    pub fn write(&mut self, channel_idx: usize, value: u16) {
+        let packet = generate_yaagc_packet(channel_idx, value);
+        self.tx.send(packet).unwrap();
     }
 }

@@ -1,3 +1,5 @@
+use crate::utils::{generate_yaagc_packet, parse_yaagc_packet};
+
 use crossbeam_channel::{unbounded, Receiver, Sender};
 use log::debug;
 
@@ -81,51 +83,6 @@ fn get_7seg_value(c: u8, d: u8) -> u16 {
     let mut res: u16 = get_7seg(c) as u16;
     res = res << 8 | get_7seg(d) as u16;
     res
-}
-
-fn generate_yaagc_packet(channel: usize, value: u16) -> [u8; 4] {
-    [
-        0x0 | ((channel >> 3) & 0x1F) as u8,
-        0x40 | ((channel & 0x7) << 3) as u8 | ((value >> 12) & 0x7) as u8,
-        0x80 | ((value >> 6) & 0x3F) as u8,
-        0xC0 | (value & 0x3F) as u8,
-    ]
-}
-
-fn parse_yaagc_packet(msg: [u8; 4]) -> Option<(u16, u16)> {
-    //println!("{:x?} - {:?}", msg, msg.len());
-    let a;
-    let b;
-    let c;
-    let d;
-
-    match msg.len() {
-        4 => {
-            a = *msg.get(0).unwrap();
-            b = *msg.get(1).unwrap();
-            c = *msg.get(2).unwrap();
-            d = *msg.get(3).unwrap();
-        }
-        5 => {
-            a = *msg.get(0).unwrap();
-            b = *msg.get(1).unwrap();
-            c = *msg.get(2).unwrap();
-            d = *msg.get(3).unwrap();
-        }
-        _ => {
-            return None;
-        }
-    }
-    //println!("Info: {:x} {:x} {:x} {:x}", a, b, c, d);
-
-    if a & 0xC0 != 0x00 || b & 0xC0 != 0x40 || c & 0xC0 != 0x80 || d & 0xC0 != 0xC0 {
-        //println!("Failed");
-        return None;
-    }
-
-    let value: u16 = ((b as u16) & 0x7) << 12 | ((c as u16) & 0x3F) << 6 | ((d & 0x3F) as u16);
-    let channel: u16 = ((a as u16) & 0x3F) << 3 | ((b as u16) >> 3 & 0x7);
-    Some((channel, value))
 }
 
 fn handle_stream_input(stream: &mut TcpStream, keypress_tx: &Sender<u16>) {
@@ -231,10 +188,6 @@ fn dsky_network_thread(keypress_tx: Sender<u16>, dsky_rx: Receiver<[u8; 4]>) {
 
 impl DskyDisplay {
     pub fn new() -> Self {
-        let ctx = zmq::Context::new();
-        let socket = ctx.socket(zmq::PUB).unwrap();
-        let mut _res = socket.bind("tcp://127.0.0.1:81968");
-
         let (keypress_tx, keypress_rx) = unbounded();
         let (dsky_tx, dsky_rx) = unbounded();
         let (flash_tx, flash_rx) = unbounded();
