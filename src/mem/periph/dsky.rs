@@ -188,10 +188,6 @@ fn dsky_network_thread(keypress_tx: Sender<u16>, dsky_rx: Receiver<[u8; 4]>) {
 
 impl DskyDisplay {
     pub fn new() -> Self {
-        let ctx = zmq::Context::new();
-        let socket = ctx.socket(zmq::PUB).unwrap();
-        let mut _res = socket.bind("tcp://127.0.0.1:81968");
-
         let (keypress_tx, keypress_rx) = unbounded();
         let (dsky_tx, dsky_rx) = unbounded();
         let (flash_tx, flash_rx) = unbounded();
