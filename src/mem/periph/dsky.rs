@@ -122,7 +122,7 @@ fn handle_steam_output(stream: &mut TcpStream, dsky_rx: &Receiver<[u8; 4]>) {
             }
         };
 
-        match stream.write(&msg) {
+        match stream.write_all(&msg) {
             Ok(_x) => {}
             _ => {
                 break;

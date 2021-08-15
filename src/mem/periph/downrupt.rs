@@ -22,7 +22,7 @@ fn downrupt_thread(rx: Receiver<[u8; 4]>) {
                         }
                     };
 
-                    match xa.write(&msg) {
+                    match xa.write_all(&msg) {
                         Ok(_x) => {}
                         _ => {
                             break;
