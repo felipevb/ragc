@@ -87,6 +87,8 @@ pub struct AgcCpu {
     unprog: std::collections::VecDeque<AgcUnprogSeq>,
     pub rupt: u16,
     incr_tx: Sender<()>,
+
+    nightwatch: u16,
 }
 
 impl AgcCpu {
@@ -124,6 +126,8 @@ impl AgcCpu {
             gint: false,
             is_irupt: false,
             rupt: 1 << RUPT_DOWNRUPT,
+
+            nightwatch: 0
         };
 
         cpu.reset();
@@ -151,13 +155,17 @@ impl AgcCpu {
     pub fn check_editing(&mut self, k: usize) {
         match k {
             0o20 | 0o21 | 0o22 | 0o23 => {
-                self.write_s15(k, self.read_s15(k));
+                let val = self.read_s15(k);
+                self.write_s15(k, val);
             }
             _ => {}
         }
     }
 
-    pub fn read(&self, idx: usize) -> u16 {
+    pub fn read(&mut self, idx: usize) -> u16 {
+        if idx == 0o067 {
+            self.nightwatch += 1;
+        }
         self.mem.read(idx)
     }
 
@@ -175,7 +183,7 @@ impl AgcCpu {
     ///  Returns a u16 that is sign extended to 16 bits
     ///
     ///
-    pub fn read_s16(&self, idx: usize) -> u16 {
+    pub fn read_s16(&mut self, idx: usize) -> u16 {
         match idx {
             // Handle the case where the source of memory will
             // already return 16-bits. Do not perform a sign extend
@@ -196,7 +204,7 @@ impl AgcCpu {
     ///  ## Result
     ///  Returns a u16 that is a signed 15 bits
     ///
-    pub fn read_s15(&self, idx: usize) -> u16 {
+    pub fn read_s15(&mut self, idx: usize) -> u16 {
         match idx {
             // With this, we are reading from a S16 bit value. We need to overflow
             // correct to a s15 bit value.
@@ -261,6 +269,9 @@ impl AgcCpu {
     }
 
     pub fn write(&mut self, idx: usize, val: u16) {
+        if idx == 0o067 {
+            self.nightwatch += 1;
+        }
         self.mem.write(idx, val)
     }
 
@@ -317,7 +328,7 @@ impl AgcCpu {
         self.mem.write_io(idx, val);
     }
 
-    fn is_overflow(&self) -> bool {
+    fn is_overflow(&mut self) -> bool {
         let a = self.read(REG_A);
         match a & 0xC000 {
             0xC000 | 0x0000 => false,
@@ -350,8 +361,8 @@ impl AgcCpu {
                 self.gint = false;
 
                 // Store registers to Save State
-                debug!("Saving State!");
-                self.write(REG_PC_SHADOW, self.read(REG_PC) + 1);
+                let val = self.read(REG_PC) + 1;
+                self.write(REG_PC_SHADOW, val);
                 self.write(REG_IR, self.calculate_instr_data());
                 self.idx_val = 0;
 
@@ -395,10 +406,7 @@ impl AgcCpu {
                 } else {
                     inst.get_data_bits() & 0o1777
                 };
-                //let bits = inst.get_data_bits();
-
-                //let mem_data = self.mem.read(inst.get_data_bits() as usize);
-                self.idx_val = self.mem.read(inst.get_data_bits() as usize);
+                self.idx_val = self.read(inst.get_data_bits() as usize);
                 self.check_editing(bits as usize);
             }
             AgcMnem::INHINT => return self.inhint(&inst),
@@ -435,7 +443,7 @@ impl AgcCpu {
         true
     }
 
-    pub fn print_state(&self) {
+    pub fn print_state(&mut self) {
         info!("=========================================================");
         //debug!("AGCCpu State:");
         info!(
