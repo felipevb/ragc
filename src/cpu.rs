@@ -276,7 +276,7 @@ impl AgcCpu {
     }
 
     #[allow(dead_code)]
-    pub fn read_dp(&self, idx: usize) -> u32 {
+    pub fn read_dp(&mut self, idx: usize) -> u32 {
         let upper: u32 = self.read_s15(idx) as u32;
         let lower: u32 = self.read_s15(idx + 1) as u32;
 

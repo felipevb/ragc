@@ -41,7 +41,7 @@ mod logic_tests {
             cpu.write(*idx, *reg_val);
             cpu.step();
 
-            validate_cpu_state(&cpu, 0x801);
+            validate_cpu_state(&mut cpu, 0x801);
             assert_eq!(cpu.read(cpu::REG_A), *expect_a_result);
         }
     }

@@ -20,7 +20,7 @@ mod arith_tests {
             cpu.step();
             cpu.step();
 
-            validate_cpu_state(&cpu, 0x802);
+            validate_cpu_state(&mut cpu, 0x802);
             assert_eq!(cpu.read_s16(idx), *val);
         }
     }
@@ -47,7 +47,7 @@ mod arith_tests {
             cpu.step();
             cpu.step();
 
-            validate_cpu_state(&cpu, 0x802);
+            validate_cpu_state(&mut cpu, 0x802);
             assert_eq!(
                 cpu.read(idx),
                 *val,
@@ -75,7 +75,7 @@ mod arith_tests {
             cpu.step();
             cpu.step();
 
-            validate_cpu_state(&cpu, 0x802);
+            validate_cpu_state(&mut cpu, 0x802);
             println!("{:x} | {:x}", cpu.read(idx), *val);
             assert_eq!(
                 cpu.read(idx),
@@ -129,7 +129,7 @@ mod arith_tests {
             cpu.write(idx, *start_val);
             cpu.step();
 
-            validate_cpu_state(&cpu, 0x801);
+            validate_cpu_state(&mut cpu, 0x801);
             assert_eq!(cpu.read(idx), *expect_res);
         }
     }
@@ -172,9 +172,9 @@ mod arith_tests {
             cpu.write_s15(0o200, *divisor);
 
             cpu.step();
-            validate_cpu_state(&cpu, 0x801);
+            validate_cpu_state(&mut cpu, 0x801);
             cpu.step();
-            validate_cpu_state(&cpu, 0x802);
+            validate_cpu_state(&mut cpu, 0x802);
 
             assert_eq!(cpu.read_s15(cpu::REG_A), *quotent);
             assert_eq!(cpu.read_s15(cpu::REG_L), *remainder);
@@ -216,9 +216,9 @@ mod arith_tests {
             // Set the Values to Test
             cpu.write(*idx, *val);
             cpu.step();
-            validate_cpu_state(&cpu, 0x801);
+            validate_cpu_state(&mut cpu, 0x801);
             cpu.step();
-            validate_cpu_state(&cpu, 0x802);
+            validate_cpu_state(&mut cpu, 0x802);
             assert_eq!(cpu.read(*idx), *expected);
         }
     }
@@ -250,9 +250,9 @@ mod arith_tests {
             cpu.write(*idx, *kval);
 
             cpu.step();
-            validate_cpu_state(&cpu, 0x801);
+            validate_cpu_state(&mut cpu, 0x801);
             cpu.step();
-            validate_cpu_state(&cpu, 0x802);
+            validate_cpu_state(&mut cpu, 0x802);
 
             assert_eq!(
                 cpu.read(cpu::REG_A),
@@ -299,9 +299,9 @@ mod arith_tests {
             cpu.write(*idx, *kval);
 
             cpu.step();
-            validate_cpu_state(&cpu, 0x801);
+            validate_cpu_state(&mut cpu, 0x801);
             cpu.step();
-            validate_cpu_state(&cpu, 0x802);
+            validate_cpu_state(&mut cpu, 0x802);
 
             assert_eq!(cpu.read(cpu::REG_A), *expected);
         }
@@ -353,9 +353,9 @@ mod arith_tests {
             cpu.write_s15(*k, *kval);
 
             cpu.step();
-            validate_cpu_state(&cpu, 0x801);
+            validate_cpu_state(&mut cpu, 0x801);
             cpu.step();
-            validate_cpu_state(&cpu, 0x802);
+            validate_cpu_state(&mut cpu, 0x802);
 
             //assert_eq!(cpu.read(cpu::REG_A), *exp_aval);
             assert_eq!(cpu.read(cpu::REG_L), *exp_lval);

@@ -39,7 +39,8 @@ impl AgcInterrupt for AgcCpu {
     fn resume(&mut self, _inst: &AgcInst) -> bool {
         self.cycles = 2;
 
-        self.write(REG_PC, self.read(REG_PC_SHADOW) - 1);
+        let val = self.read(REG_PC_SHADOW) - 1;
+        self.write(REG_PC, val);
         self.ir = self.read(REG_IR);
         self.idx_val = 0;
 

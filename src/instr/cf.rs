@@ -165,7 +165,7 @@ mod cfg_tests {
         assert_eq!(cpu.read(cpu::REG_A), 0xfc2e);
         cpu.step();
 
-        validate_cpu_state(&cpu, 0x803);
+        validate_cpu_state(&mut cpu, 0x803);
         assert_eq!(cpu.read(cpu::REG_A), 0x03d0); // This should be |A|-1
     }
 }
