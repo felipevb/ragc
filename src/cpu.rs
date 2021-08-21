@@ -1,4 +1,4 @@
-use log::{debug, info, warn};
+use log::{debug, info, warn, trace};
 
 use crossbeam_channel::Sender;
 
@@ -41,6 +41,8 @@ pub const _RUPT_UPRUPT: u8 = 0x7;
 pub const RUPT_DOWNRUPT: u8 = 0x8;
 pub const _RUPT_RADAR: u8 = 0x9;
 pub const _RUPT_HANDRUPT: u8 = 0xA;
+
+pub const NIGHTWATCH_TIME: u32 = 1920000000 / 11700;
 
 #[derive(Debug)]
 #[allow(dead_code)]
@@ -89,6 +91,7 @@ pub struct AgcCpu {
     incr_tx: Sender<()>,
 
     nightwatch: u16,
+    nightwatch_cycles: u32
 }
 
 impl AgcCpu {
@@ -127,7 +130,8 @@ impl AgcCpu {
             is_irupt: false,
             rupt: 1 << RUPT_DOWNRUPT,
 
-            nightwatch: 0
+            nightwatch: 0,
+            nightwatch_cycles: 0
         };
 
         cpu.reset();
@@ -146,7 +150,6 @@ impl AgcCpu {
         self.ir = self.read(val as usize);
     }
 
-    #[allow(dead_code)]
     pub fn set_unprog_seq(&mut self, unprog_type: AgcUnprogSeq) {
         debug!("Setting UnprogSeq: {:?}", unprog_type);
         self.unprog.push_back(unprog_type);
@@ -469,12 +472,34 @@ impl AgcCpu {
         info!("IR: {:x} | INDEX: {:x}", self.ir, self.idx_val);
     }
 
+    fn handle_nightwatch(&mut self) {
+        self.nightwatch_cycles += self.cycles as u32;
+        if self.nightwatch_cycles >= NIGHTWATCH_TIME {
+            trace!("Checking Nightwatchman {:?}", self.nightwatch);
+            self.nightwatch_cycles = 0;
+
+            // Check to see if there was any accesses to the
+            // NIGHT WATCHMAN register. If there was, continue on.
+            // If not, then reboot the AGC
+            if self.nightwatch == 0 {
+                // Send GOJAM unprogram to restart the AGC.
+                debug!("NIGHT WATCHMAN Restart. Sending GOJ");
+                self.set_unprog_seq(AgcUnprogSeq::GOJ);
+            }
+
+            self.nightwatch = 0;
+        }
+    }
+
     fn update_cycles(&mut self) {
-        let timers = self.mem.fetch_timers();
-        self.total_cycles += self.cycles as usize;
         self.mct_counter += self.cycles as f64 * 12.0;
+
+        self.total_cycles += self.cycles as usize;
         debug!("TotalCyles: {:?}", self.total_cycles * 12);
 
+        self.handle_nightwatch();
+
+        let timers = self.mem.fetch_timers();
         self.rupt |= timers.pump_mcts(self.cycles, &mut self.unprog);
     }
 
