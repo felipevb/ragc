@@ -71,6 +71,10 @@ pub enum AgcOverflow {
     Negative,
 }
 
+trait AgcUnprogInstr {
+    fn handle_goj(&mut self) -> u16;
+}
+
 #[allow(dead_code)]
 pub struct AgcCpu {
     mem: AgcMemoryMap,
@@ -92,6 +96,42 @@ pub struct AgcCpu {
 
     nightwatch: u16,
     nightwatch_cycles: u32
+}
+
+impl AgcUnprogInstr for AgcCpu {
+    fn handle_goj(&mut self) -> u16 {
+        // Within Memo #340, the following is listed on what GOJAM actions should
+        // be performed.
+        self.write_io(5, 0);    // PYJETS
+        self.write_io(6, 0);    // ROLLJETS
+        self.write_io(10, 0);   // DSKY
+        self.write_io(11, 0);   // DSALMOUT
+        self.write_io(12, 0);   // 12
+        self.write_io(13, 0);   // 13
+        self.write_io(13, 0);   // 14
+        self.write_io(34, 0);   // DOWNWORD1
+        self.write_io(34, 0);   // DOWNWORD2
+
+        // Clearing Bit 11 of Channel 33
+        let val = self.read_io(33);
+        self.write_io(33, val & 0o75777);
+
+        // Reset a bunch of hardware logic. This section here is to accomodate
+        // any future implementations of reseting any of this hardware logic.
+        // One possible reset is all rupt requests.
+        self.gint = false;
+        self.is_irupt = false;
+
+        // TODO: Check RUPT requests
+        // TODO: Check how to clear TIMER requests
+        // TODO: Check how to clear UPRUPT requests
+
+        // Generate Restart light and a bunch of other stuff mentioned in the
+        // memo. Again, this section is to handle the generation of signals.
+        // TODO: Restart Light Generation.
+
+        2
+    }
 }
 
 impl AgcCpu {
@@ -218,8 +258,8 @@ impl AgcCpu {
         }
     }
 
-    //
-    // Perform a write to a memory interface with a signed 16-bit value. For
+    ///
+    ///  Perform a write to a memory interface with a signed 16-bit value. For
     ///  registers A and Q, this is just a simple write with all 16 bits.
     ///  Otherwise, perform an overflow corrections to bring it to 15 bits
     ///
@@ -504,7 +544,8 @@ impl AgcCpu {
     }
 
     fn step_unprogrammed(&mut self) -> bool {
-        self.cycles = match self.unprog.pop_front().unwrap() {
+        let instr = self.unprog.pop_front().unwrap();
+        self.cycles = match instr {
             AgcUnprogSeq::GOJ => 2,
             AgcUnprogSeq::TCSAJ => 2,
             AgcUnprogSeq::STORE => 2,
@@ -517,6 +558,15 @@ impl AgcCpu {
 
         // Update Timers based on instruction MCTs
         self.update_cycles();
+
+
+        match instr {
+            AgcUnprogSeq::GOJ => {
+                self.handle_goj();
+                return true;
+            }
+            _ => {}
+        };
 
         if !self.rupt_disabled() {
             self.rupt |= self.mem.check_interrupts();
