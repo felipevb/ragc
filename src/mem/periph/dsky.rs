@@ -248,9 +248,9 @@ impl DskyDisplay {
         match channel_idx {
             0o13 => {
                 if value & 0o01000 != 0o00000 {
-                    self.output_flags |= 0o00600;
+                    self.output_flags |= 0o00400;
                 } else {
-                    self.output_flags &= 0o77177;
+                    self.output_flags &= 0o77377;
                 }
                 self.flash_tx.send(self.output_flags).unwrap();
             }
