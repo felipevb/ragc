@@ -41,7 +41,8 @@ impl AgcIo for AgcCpu {
 
         match k {
             2 => {
-                self.write_s16(REG_A, self.read_s16(REG_A) | io_val);
+                let val = self.read_s16(REG_A) | io_val;
+                self.write_s16(REG_A, val);
             }
             _ => {
                 let n = self.read_s15(REG_A) | (io_val & 0x7FFF);
@@ -77,7 +78,8 @@ impl AgcIo for AgcCpu {
 
         match k {
             2 => {
-                self.write_s16(REG_A, self.read_s16(REG_A) & io_val);
+                let val = self.read_s16(REG_A) & io_val;
+                self.write_s16(REG_A, val);
             }
             _ => {
                 let n = self.read_s15(REG_A) & (io_val & 0x7FFF);
@@ -113,7 +115,8 @@ impl AgcIo for AgcCpu {
 
         match k {
             2 => {
-                self.write_s16(REG_A, self.read_s16(REG_A) ^ io_val);
+                let val = self.read_s16(REG_A) ^ io_val;
+                self.write_s16(REG_A, val);
             }
             _ => {
                 let n = self.read_s15(REG_A) ^ (io_val & 0x7FFF);
@@ -290,7 +293,7 @@ mod io_tests {
             cpu.step();
             cpu.step();
 
-            validate_cpu_state(&cpu, 0x802);
+            validate_cpu_state(&mut cpu, 0x802);
             assert_eq!(cpu.read(cpu::REG_A), *expect_result);
         }
     }
@@ -335,7 +338,7 @@ mod io_tests {
             cpu.step();
             cpu.step();
 
-            validate_cpu_state(&cpu, 0x802);
+            validate_cpu_state(&mut cpu, 0x802);
             assert_eq!(cpu.read(cpu::REG_A), *expect_a_result);
         }
     }
@@ -382,7 +385,7 @@ mod io_tests {
             cpu.step();
             cpu.step();
 
-            validate_cpu_state(&cpu, 0x802);
+            validate_cpu_state(&mut cpu, 0x802);
             assert_eq!(cpu.read(cpu::REG_A), *expect_a_result);
         }
     }
@@ -427,7 +430,7 @@ mod io_tests {
             cpu.step();
             cpu.step();
 
-            validate_cpu_state(&cpu, 0x802);
+            validate_cpu_state(&mut cpu, 0x802);
             assert_eq!(cpu.read(cpu::REG_A), *expect_a_result);
         }
     }
@@ -461,7 +464,7 @@ mod io_tests {
             cpu.step();
             cpu.step();
 
-            validate_cpu_state(&cpu, 0x802);
+            validate_cpu_state(&mut cpu, 0x802);
             assert_eq!(cpu.read(*reg), *expect_result);
         }
     }
@@ -506,7 +509,7 @@ mod io_tests {
             cpu.step();
             cpu.step();
 
-            validate_cpu_state(&cpu, 0x802);
+            validate_cpu_state(&mut cpu, 0x802);
             assert_eq!(cpu.read(cpu::REG_A), *expect_a_result);
             assert_eq!(cpu.read(*reg), *expect_reg_result);
         }
@@ -554,7 +557,7 @@ mod io_tests {
             cpu.step();
             cpu.step();
 
-            validate_cpu_state(&cpu, 0x802);
+            validate_cpu_state(&mut cpu, 0x802);
             assert_eq!(cpu.read(cpu::REG_A), *expect_a_result);
             assert_eq!(cpu.read(*reg), *expect_reg_result);
         }

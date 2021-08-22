@@ -19,7 +19,7 @@ mod ad_tests {
         cpu.step();
 
         let mut result = cpu.read(cpu::REG_A);
-        validate_cpu_state(&cpu, 0x801);
+        validate_cpu_state(&mut cpu, 0x801);
         assert_eq!(result, 0x20);
 
         // Performing basic Add with AD instruction
@@ -33,7 +33,7 @@ mod ad_tests {
         cpu.step();
 
         result = cpu.read(cpu::REG_A);
-        validate_cpu_state(&cpu, 0x801);
+        validate_cpu_state(&mut cpu, 0x801);
         assert_eq!(result, 0x20);
     }
 
@@ -53,7 +53,7 @@ mod ad_tests {
         cpu.step();
 
         let mut result = cpu.read(cpu::REG_A);
-        validate_cpu_state(&cpu, 0x801);
+        validate_cpu_state(&mut cpu, 0x801);
         assert_eq!(result, 0x4000);
 
         // Create a test to handle overflow (reg/mem)
@@ -68,7 +68,7 @@ mod ad_tests {
         cpu.step();
 
         result = cpu.read(cpu::REG_A);
-        validate_cpu_state(&cpu, 0x801);
+        validate_cpu_state(&mut cpu, 0x801);
         assert_eq!(result, 0x4000);
     }
 
@@ -88,7 +88,7 @@ mod ad_tests {
         cpu.step();
 
         let mut result = cpu.read(cpu::REG_A);
-        validate_cpu_state(&cpu, 0x801);
+        validate_cpu_state(&mut cpu, 0x801);
         assert_eq!(result, 0xBFFF);
 
         // Create a test to handle overflow (regs/mem)
@@ -103,7 +103,7 @@ mod ad_tests {
         cpu.step();
 
         result = cpu.read(cpu::REG_A);
-        validate_cpu_state(&cpu, 0x801);
+        validate_cpu_state(&mut cpu, 0x801);
         assert_eq!(result, 0xBFFF);
     }
 
@@ -120,7 +120,7 @@ mod ad_tests {
         cpu.step();
 
         let result = cpu.read(cpu::REG_A);
-        validate_cpu_state(&cpu, 0x801);
+        validate_cpu_state(&mut cpu, 0x801);
         print!("Result {:x}", result);
         assert_eq!(result, 0xFFFD);
     }
@@ -138,7 +138,7 @@ mod ad_tests {
         cpu.step();
 
         let result = cpu.read(cpu::REG_A);
-        validate_cpu_state(&cpu, 0x801);
+        validate_cpu_state(&mut cpu, 0x801);
         print!("Result {:x}", result);
         assert_eq!(result, 0x1E);
     }
@@ -159,7 +159,7 @@ mod ad_tests {
 
         let mut result = cpu.read(cpu::REG_A);
         let mut result1 = cpu.read(cpu::REG_L);
-        validate_cpu_state(&cpu, 0x801);
+        validate_cpu_state(&mut cpu, 0x801);
         assert_eq!(result, 0x20);
         assert_eq!(result1, 0x20);
 
@@ -175,7 +175,7 @@ mod ad_tests {
 
         result = cpu.read(cpu::REG_A);
         result1 = cpu.read(0o200);
-        validate_cpu_state(&cpu, 0x801);
+        validate_cpu_state(&mut cpu, 0x801);
         assert_eq!(result, 0x20);
         assert_eq!(result1, 0x20);
     }
@@ -198,7 +198,7 @@ mod ad_tests {
             cpu.write(idx, 0x0001);
             cpu.step();
 
-            validate_cpu_state(&cpu, 0x801);
+            validate_cpu_state(&mut cpu, 0x801);
             assert_eq!(cpu.read(cpu::REG_A), 0x4000);
             assert_eq!(cpu.read(idx), 0x0000);
             assert_eq!(cpu.read_s16(idx), 0x0000);
@@ -223,7 +223,7 @@ mod ad_tests {
             cpu.write(idx, 0xFFFE);
             cpu.step();
 
-            validate_cpu_state(&cpu, 0x801);
+            validate_cpu_state(&mut cpu, 0x801);
             assert_eq!(cpu.read(cpu::REG_A), 0xBFFF);
             assert_eq!(cpu.read(idx), 0x7FFF);
             assert_eq!(cpu.read_s16(idx), 0xFFFF);
@@ -246,7 +246,7 @@ mod ad_tests {
             cpu.write(idx, 0xFFFE);
             cpu.step();
 
-            validate_cpu_state(&cpu, 0x801);
+            validate_cpu_state(&mut cpu, 0x801);
             assert_eq!(cpu.read(cpu::REG_A), 0xFFFD);
             assert_eq!(cpu.read(idx), 0x7FFD);
             assert_eq!(cpu.read_s16(idx), 0xFFFD);
@@ -269,7 +269,7 @@ mod ad_tests {
             cpu.write(idx, 0xFFFD);
             cpu.step();
 
-            validate_cpu_state(&cpu, 0x801);
+            validate_cpu_state(&mut cpu, 0x801);
             assert_eq!(cpu.read(cpu::REG_A), 0x1E);
             assert_eq!(cpu.read(idx), 0x1E);
             assert_eq!(cpu.read_s16(idx), 0x1E);

@@ -19,7 +19,7 @@ mod scalar_tests {
 
             for i in 0..29 {
                 cpu.step();
-                validate_cpu_state(&cpu, 0x801 + i as u16);
+                validate_cpu_state(&mut cpu, 0x801 + i as u16);
             }
 
             assert_eq!(scalar_count as u16, cpu.read_io(4));
@@ -55,7 +55,7 @@ mod scalar_tests {
                     break;
                 }
             }
-            validate_cpu_state(&cpu, 0x800 + ((1 + i as u16) % 27));
+            validate_cpu_state(&mut cpu, 0x800 + ((1 + i as u16) % 27));
         }
 
         assert_eq!(1, cpu.read(crate::mem::timer::MM_TIME1));
@@ -97,7 +97,7 @@ mod scalar_tests {
             cpu.reset();
             cpu.write(*timer_addr, 0o77777);
             cpu.step();
-            validate_cpu_state(&cpu, 0x900);
+            validate_cpu_state(&mut cpu, 0x900);
 
             for i in 0..27 * scalar_count {
                 let current_pc = cpu.read(cpu::REG_Z);
@@ -113,7 +113,7 @@ mod scalar_tests {
                     assert_eq!(0o00000, cpu.read(crate::mem::timer::MM_TIME3));
                     break;
                 } else {
-                    validate_cpu_state(&cpu, 0x900 + ((1 + i as u16) % 27));
+                    validate_cpu_state(&mut cpu, 0x900 + ((1 + i as u16) % 27));
                 }
             }
         }
@@ -150,7 +150,7 @@ mod scalar_tests {
             cpu.reset();
             cpu.write(*timer_addr, 0o77777);
             cpu.step();
-            validate_cpu_state(&cpu, 0x900);
+            validate_cpu_state(&mut cpu, 0x900);
 
             for i in 0..27 * scalar_count {
                 let current_pc = cpu.read(cpu::REG_Z);
@@ -166,7 +166,7 @@ mod scalar_tests {
                     assert_eq!(0o00000, cpu.read(crate::mem::timer::MM_TIME3));
                     break;
                 } else {
-                    validate_cpu_state(&cpu, 0x900 + ((1 + i as u16) % 27));
+                    validate_cpu_state(&mut cpu, 0x900 + ((1 + i as u16) % 27));
                 }
             }
         }

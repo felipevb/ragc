@@ -1,7 +1,6 @@
 use super::AgcInst;
 use crate::cpu;
 use crate::cpu::*;
-use log::trace;
 
 pub trait AgcLogic {
     fn mask(&mut self, inst: &AgcInst) -> bool;
@@ -31,13 +30,12 @@ impl AgcLogic for AgcCpu {
         let k = inst.get_kaddr();
         match k {
             cpu::REG_A | cpu::REG_Q => {
-                let val = self.read_s16(k);
-                trace!("MASK (S16) {:x}", val);
-                self.write_s16(REG_A, self.read_s16(REG_A) & val);
+                let mut val = self.read_s16(k);
+                val = self.read_s16(REG_A) & val;
+                self.write_s16(REG_A, val);
             }
             _ => {
                 let val = self.read_s15(k);
-                trace!("MASK (S15) {:x}", val);
                 let a = self.read_s15(REG_A);
                 let n = a & (val & 0x7FFF);
                 self.write_s15(REG_A, n & 0x7FFF);

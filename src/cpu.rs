@@ -1,4 +1,4 @@
-use log::{debug, info, warn};
+use log::{debug, info, warn, trace};
 
 use crossbeam_channel::Sender;
 
@@ -42,6 +42,8 @@ pub const RUPT_DOWNRUPT: u8 = 0x8;
 pub const _RUPT_RADAR: u8 = 0x9;
 pub const _RUPT_HANDRUPT: u8 = 0xA;
 
+pub const NIGHTWATCH_TIME: u32 = 1920000000 / 11700;
+
 #[derive(Debug)]
 #[allow(dead_code)]
 pub enum AgcUnprogSeq {
@@ -69,6 +71,10 @@ pub enum AgcOverflow {
     Negative,
 }
 
+trait AgcUnprogInstr {
+    fn handle_goj(&mut self) -> u16;
+}
+
 #[allow(dead_code)]
 pub struct AgcCpu {
     mem: AgcMemoryMap,
@@ -87,6 +93,45 @@ pub struct AgcCpu {
     unprog: std::collections::VecDeque<AgcUnprogSeq>,
     pub rupt: u16,
     incr_tx: Sender<()>,
+
+    nightwatch: u16,
+    nightwatch_cycles: u32
+}
+
+impl AgcUnprogInstr for AgcCpu {
+    fn handle_goj(&mut self) -> u16 {
+        // Within Memo #340, the following is listed on what GOJAM actions should
+        // be performed.
+        self.write_io(5, 0);    // PYJETS
+        self.write_io(6, 0);    // ROLLJETS
+        self.write_io(10, 0);   // DSKY
+        self.write_io(11, 0);   // DSALMOUT
+        self.write_io(12, 0);   // 12
+        self.write_io(13, 0);   // 13
+        self.write_io(13, 0);   // 14
+        self.write_io(34, 0);   // DOWNWORD1
+        self.write_io(34, 0);   // DOWNWORD2
+
+        // Clearing Bit 11 of Channel 33
+        let val = self.read_io(33);
+        self.write_io(33, val & 0o75777);
+
+        // Reset a bunch of hardware logic. This section here is to accomodate
+        // any future implementations of reseting any of this hardware logic.
+        // One possible reset is all rupt requests.
+        self.gint = false;
+        self.is_irupt = false;
+
+        // TODO: Check RUPT requests
+        // TODO: Check how to clear TIMER requests
+        // TODO: Check how to clear UPRUPT requests
+
+        // Generate Restart light and a bunch of other stuff mentioned in the
+        // memo. Again, this section is to handle the generation of signals.
+        // TODO: Restart Light Generation.
+
+        2
+    }
 }
 
 impl AgcCpu {
@@ -124,6 +169,9 @@ impl AgcCpu {
             gint: false,
             is_irupt: false,
             rupt: 1 << RUPT_DOWNRUPT,
+
+            nightwatch: 0,
+            nightwatch_cycles: 0
         };
 
         cpu.reset();
@@ -142,7 +190,6 @@ impl AgcCpu {
         self.ir = self.read(val as usize);
     }
 
-    #[allow(dead_code)]
     pub fn set_unprog_seq(&mut self, unprog_type: AgcUnprogSeq) {
         debug!("Setting UnprogSeq: {:?}", unprog_type);
         self.unprog.push_back(unprog_type);
@@ -151,13 +198,17 @@ impl AgcCpu {
     pub fn check_editing(&mut self, k: usize) {
         match k {
             0o20 | 0o21 | 0o22 | 0o23 => {
-                self.write_s15(k, self.read_s15(k));
+                let val = self.read_s15(k);
+                self.write_s15(k, val);
             }
             _ => {}
         }
     }
 
-    pub fn read(&self, idx: usize) -> u16 {
+    pub fn read(&mut self, idx: usize) -> u16 {
+        if idx == 0o067 {
+            self.nightwatch += 1;
+        }
         self.mem.read(idx)
     }
 
@@ -175,7 +226,7 @@ impl AgcCpu {
     ///  Returns a u16 that is sign extended to 16 bits
     ///
     ///
-    pub fn read_s16(&self, idx: usize) -> u16 {
+    pub fn read_s16(&mut self, idx: usize) -> u16 {
         match idx {
             // Handle the case where the source of memory will
             // already return 16-bits. Do not perform a sign extend
@@ -196,7 +247,7 @@ impl AgcCpu {
     ///  ## Result
     ///  Returns a u16 that is a signed 15 bits
     ///
-    pub fn read_s15(&self, idx: usize) -> u16 {
+    pub fn read_s15(&mut self, idx: usize) -> u16 {
         match idx {
             // With this, we are reading from a S16 bit value. We need to overflow
             // correct to a s15 bit value.
@@ -207,8 +258,8 @@ impl AgcCpu {
         }
     }
 
-    //
-    // Perform a write to a memory interface with a signed 16-bit value. For
+    ///
+    ///  Perform a write to a memory interface with a signed 16-bit value. For
     ///  registers A and Q, this is just a simple write with all 16 bits.
     ///  Otherwise, perform an overflow corrections to bring it to 15 bits
     ///
@@ -261,11 +312,14 @@ impl AgcCpu {
     }
 
     pub fn write(&mut self, idx: usize, val: u16) {
+        if idx == 0o067 {
+            self.nightwatch += 1;
+        }
         self.mem.write(idx, val)
     }
 
     #[allow(dead_code)]
-    pub fn read_dp(&self, idx: usize) -> u32 {
+    pub fn read_dp(&mut self, idx: usize) -> u32 {
         let upper: u32 = self.read_s15(idx) as u32;
         let lower: u32 = self.read_s15(idx + 1) as u32;
 
@@ -317,7 +371,7 @@ impl AgcCpu {
         self.mem.write_io(idx, val);
     }
 
-    fn is_overflow(&self) -> bool {
+    fn is_overflow(&mut self) -> bool {
         let a = self.read(REG_A);
         match a & 0xC000 {
             0xC000 | 0x0000 => false,
@@ -350,8 +404,8 @@ impl AgcCpu {
                 self.gint = false;
 
                 // Store registers to Save State
-                debug!("Saving State!");
-                self.write(REG_PC_SHADOW, self.read(REG_PC) + 1);
+                let val = self.read(REG_PC) + 1;
+                self.write(REG_PC_SHADOW, val);
                 self.write(REG_IR, self.calculate_instr_data());
                 self.idx_val = 0;
 
@@ -395,10 +449,7 @@ impl AgcCpu {
                 } else {
                     inst.get_data_bits() & 0o1777
                 };
-                //let bits = inst.get_data_bits();
-
-                //let mem_data = self.mem.read(inst.get_data_bits() as usize);
-                self.idx_val = self.mem.read(inst.get_data_bits() as usize);
+                self.idx_val = self.read(inst.get_data_bits() as usize);
                 self.check_editing(bits as usize);
             }
             AgcMnem::INHINT => return self.inhint(&inst),
@@ -435,7 +486,7 @@ impl AgcCpu {
         true
     }
 
-    pub fn print_state(&self) {
+    pub fn print_state(&mut self) {
         info!("=========================================================");
         //debug!("AGCCpu State:");
         info!(
@@ -461,17 +512,40 @@ impl AgcCpu {
         info!("IR: {:x} | INDEX: {:x}", self.ir, self.idx_val);
     }
 
+    fn handle_nightwatch(&mut self) {
+        self.nightwatch_cycles += self.cycles as u32;
+        if self.nightwatch_cycles >= NIGHTWATCH_TIME {
+            trace!("Checking Nightwatchman {:?}", self.nightwatch);
+            self.nightwatch_cycles = 0;
+
+            // Check to see if there was any accesses to the
+            // NIGHT WATCHMAN register. If there was, continue on.
+            // If not, then reboot the AGC
+            if self.nightwatch == 0 {
+                // Send GOJAM unprogram to restart the AGC.
+                debug!("NIGHT WATCHMAN Restart. Sending GOJ");
+                self.set_unprog_seq(AgcUnprogSeq::GOJ);
+            }
+
+            self.nightwatch = 0;
+        }
+    }
+
     fn update_cycles(&mut self) {
-        let timers = self.mem.fetch_timers();
-        self.total_cycles += self.cycles as usize;
         self.mct_counter += self.cycles as f64 * 12.0;
+
+        self.total_cycles += self.cycles as usize;
         debug!("TotalCyles: {:?}", self.total_cycles * 12);
 
+        self.handle_nightwatch();
+
+        let timers = self.mem.fetch_timers();
         self.rupt |= timers.pump_mcts(self.cycles, &mut self.unprog);
     }
 
     fn step_unprogrammed(&mut self) -> bool {
-        self.cycles = match self.unprog.pop_front().unwrap() {
+        let instr = self.unprog.pop_front().unwrap();
+        self.cycles = match instr {
             AgcUnprogSeq::GOJ => 2,
             AgcUnprogSeq::TCSAJ => 2,
             AgcUnprogSeq::STORE => 2,
@@ -484,6 +558,15 @@ impl AgcCpu {
 
         // Update Timers based on instruction MCTs
         self.update_cycles();
+
+
+        match instr {
+            AgcUnprogSeq::GOJ => {
+                self.handle_goj();
+                return true;
+            }
+            _ => {}
+        };
 
         if !self.rupt_disabled() {
             self.rupt |= self.mem.check_interrupts();

@@ -35,8 +35,12 @@ impl AgcLoadStore for AgcCpu {
         self.cycles = 3;
 
         let k = inst.get_kaddr() - 1;
-        self.write(REG_L, (!self.read_s16(k + 1)) & 0xFFFF);
-        self.write(REG_A, (!self.read_s16(k)) & 0xFFFF);
+
+        let val_l = (!self.read_s16(k + 1)) & 0xFFFF;
+        self.write(REG_L, val_l);
+
+        let val_a = (!self.read_s16(k)) & 0xFFFF;
+        self.write(REG_A, val_a);
 
         self.check_editing(k + 1);
         self.check_editing(k);
@@ -51,8 +55,12 @@ impl AgcLoadStore for AgcCpu {
         // up into multiple load and stores just like the hardware handles it.
         // In essence, this loads Q into A and L
         let k = inst.get_kaddr() - 1;
-        self.write_s16(REG_L, self.read_s16(k + 1));
-        self.write_s16(REG_A, self.read_s16(k));
+
+        let val_l = self.read_s16(k + 1);
+        self.write_s16(REG_L, val_l);
+
+        let val_a = self.read_s16(k);
+        self.write_s16(REG_A, val_a);
 
         self.check_editing(k + 1);
         self.check_editing(k);
@@ -77,7 +85,8 @@ impl AgcLoadStore for AgcCpu {
 
         match inst.get_kaddr_ram() {
             5 | 6 => {
-                self.ir = self.read(self.read(REG_Z) as usize);
+                let idx = self.read(REG_Z) as usize;
+                self.ir = self.read(idx);
             }
             _ => {}
         }
@@ -118,14 +127,14 @@ impl AgcLoadStore for AgcCpu {
             // Negative Overflow Scenario
             0x8000 => {
                 self.write_s16(REG_A, 0xFFFE);
-                //self.write(REG_PC, self.read(REG_PC) + 1);
-                self.update_pc(self.read(REG_PC) + 1);
+                let val = self.read(REG_PC) + 1;
+                self.update_pc(val);
             }
             // Positive Overflow Scenario
             0x4000 => {
                 self.write_s16(REG_A, 0x0001);
-                //self.write(REG_PC, self.read(REG_PC) + 1);
-                self.update_pc(self.read(REG_PC) + 1);
+                let val = self.read(REG_PC) + 1;
+                self.update_pc(val);
             }
             _ => {}
         };
@@ -185,11 +194,11 @@ mod ldst_tests {
         cpu.write(0o200, 0x00BB);
 
         cpu.step();
-        validate_cpu_state(&cpu, 0x802);
+        validate_cpu_state(&mut cpu, 0x802);
         assert_eq!(cpu.read(cpu::REG_A), 0x0001);
 
         cpu.step();
-        validate_cpu_state(&cpu, 0x803);
+        validate_cpu_state(&mut cpu, 0x803);
         assert_eq!(cpu.read(cpu::REG_A), 0x00AA);
     }
 
