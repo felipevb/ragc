@@ -314,9 +314,11 @@ impl AgcIoSpace {
             // # CHANNEL 35    DNT M2; OUTPUT CHANNEL DOWNLINK 2 SOCOND OF TWO   WORDS SERIALIZATION.
             CHANNEL_CHAN34 => self.downrupt.read(channel_idx),
             CHANNEL_CHAN35 => self.downrupt.read(channel_idx),
-
+            0o163 => {
+                self.dsky.get_channel_value(channel_idx)
+            }
             _ => {
-                error!("Unknown IO Channel: {:?}", channel_idx);
+                error!("Unknown IO Channel: {:o}", channel_idx);
                 self.io_mem[channel_idx]
             }
         }
@@ -349,6 +351,9 @@ impl AgcIoSpace {
             CHANNEL_CHAN35 => {
                 //info!("DOWNRUPTB: {:o}", val & 0x7FFF);
                 self.downrupt.write(channel_idx, val & 0o77777);
+            }
+            0o163 => {
+                self.dsky.set_channel_value(channel_idx, val);
             }
             _ => {
                 self.io_mem[channel_idx] = val;

@@ -13,7 +13,6 @@ pub struct DskyDisplay {
     prog: u16,
     proceed: u16,
     output_flags: u16,
-
     keypress: Receiver<u16>,
     keypress_val: u16,
     dsky_tx: Sender<[u8; 4]>,
@@ -249,13 +248,24 @@ impl DskyDisplay {
         match channel_idx {
             0o13 => {
                 if value & 0o01000 != 0o00000 {
-                    self.output_flags |= 0o00600;
+                    self.output_flags |= 0o00400;
                 } else {
-                    self.output_flags &= 0o77177;
+                    self.output_flags &= 0o77377;
                 }
                 self.flash_tx.send(self.output_flags).unwrap();
             }
+            0o163 => {
+                self.output_flags = value;
+                self.flash_tx.send(self.output_flags).unwrap();
+            }
             _ => {}
+        }
+    }
+
+    pub fn get_channel_value(&mut self, channel_idx: usize) -> u16 {
+        match channel_idx {
+            0o163 => { self.output_flags & 0o1771 }
+            _ => { 0o00000 }
         }
     }
 
@@ -380,6 +390,10 @@ impl super::Peripheral for DskyDisplay {
                 }
                 _ => {
                     self.keypress_val = val;
+                    if self.keypress_val == 0o22 {
+                        let io_val = self.get_channel_value(0o163);
+                        self.set_channel_value(0o163, io_val & !0o00200);
+                    }
                 }
             }
             (1 << crate::cpu::RUPT_KEY1) as u16

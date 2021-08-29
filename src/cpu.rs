@@ -44,6 +44,11 @@ pub const _RUPT_HANDRUPT: u8 = 0xA;
 
 pub const NIGHTWATCH_TIME: u32 = 1920000000 / 11700;
 
+// Each TC/TCF is 1 cycle, so we just need to have to know how many cycles it
+// takes for 300ms and thats how many TC/TCF instructions we have to see in
+// sequence to reset.
+pub const TCMONITOR_COUNT: u32 = 15000000 / 11700;
+
 #[derive(Debug)]
 #[allow(dead_code)]
 pub enum AgcUnprogSeq {
@@ -95,11 +100,16 @@ pub struct AgcCpu {
     incr_tx: Sender<()>,
 
     nightwatch: u16,
-    nightwatch_cycles: u32
+    nightwatch_cycles: u32,
+
+    tc_count: u32,
+    non_tc_count: u32
 }
 
 impl AgcUnprogInstr for AgcCpu {
     fn handle_goj(&mut self) -> u16 {
+        debug!("Handling GOJ (Restart of AGC)");
+
         // Within Memo #340, the following is listed on what GOJAM actions should
         // be performed.
         self.write_io(5, 0);    // PYJETS
@@ -130,7 +140,16 @@ impl AgcUnprogInstr for AgcCpu {
         // memo. Again, this section is to handle the generation of signals.
         // TODO: Restart Light Generation.
 
+        // Internal RAGC stuff:
+        // Reset the NIGHT WATCHMAN, TC TRAP monitors
+        self.tc_count = 0;
+        self.non_tc_count = 0;
+
+        // Reset the CPU by resetting to address 0x800
+        self.restart();
+
         2
+
     }
 }
 
@@ -171,7 +190,9 @@ impl AgcCpu {
             rupt: 1 << RUPT_DOWNRUPT,
 
             nightwatch: 0,
-            nightwatch_cycles: 0
+            nightwatch_cycles: 0,
+            tc_count: 0,
+            non_tc_count: 0
         };
 
         cpu.reset();
@@ -184,6 +205,18 @@ impl AgcCpu {
         self.update_pc(0x800);
         self.gint = false;
     }
+
+    fn restart(&mut self) {
+        // Initial PC value for the AGC CPU is at 0x800
+        // so set the PC value to that.
+        self.update_pc(0x800);
+        self.gint = false;
+
+        // Since it's a restart, light up the DSKY to indicate a restart
+        let io_val = self.read_io(0o163);
+        self.write_io(0o163, 0o200 | io_val);
+    }
+
 
     pub fn update_pc(&mut self, val: u16) {
         self.write(REG_PC, val);
@@ -421,6 +454,22 @@ impl AgcCpu {
     }
 
     pub fn execute(&mut self, inst: &AgcInst) -> bool {
+        // Handle TC TRAP Instruction Counting. The way this will be implemented
+        // based on the wording is to count how many continuous TC/TCF
+        // instructions we receive. If it surpasses the threshold, to cause a
+        // reset. The wording in Memo #260 Revision B goes...
+        // "Occurs if too many consecutive TC or TCF  instructions are run..."
+        match inst.mnem {
+            AgcMnem::TC | AgcMnem::TCF => {
+                self.non_tc_count = 0;
+                self.tc_count += 1;
+            }
+            _ => {
+                self.tc_count = 0;
+                self.non_tc_count += 1;
+            }
+        }
+
         match inst.mnem {
             AgcMnem::AD => return self.ad(&inst),
             AgcMnem::ADS => return self.ads(&inst),
@@ -531,6 +580,23 @@ impl AgcCpu {
         }
     }
 
+    fn handle_tc_trap(&mut self) {
+        if self.tc_count >= TCMONITOR_COUNT {
+            self.tc_count = 0;
+
+            // Send GOJAM unprogram to restart the AGC.
+            debug!("TC TRAP Restart. Sending GOJ");
+            self.set_unprog_seq(AgcUnprogSeq::GOJ);
+        }
+        else if self.non_tc_count >= TCMONITOR_COUNT {
+            self.tc_count = 0;
+
+            // Send GOJAM unprogram to restart the AGC.
+            debug!("TC TRAP Restart. Sending GOJ");
+            self.set_unprog_seq(AgcUnprogSeq::GOJ);
+        }
+    }
+
     fn update_cycles(&mut self) {
         self.mct_counter += self.cycles as f64 * 12.0;
 
@@ -538,6 +604,7 @@ impl AgcCpu {
         debug!("TotalCyles: {:?}", self.total_cycles * 12);
 
         self.handle_nightwatch();
+        self.handle_tc_trap();
 
         let timers = self.mem.fetch_timers();
         self.rupt |= timers.pump_mcts(self.cycles, &mut self.unprog);
@@ -806,5 +873,21 @@ mod cpu_tests {
             assert_eq!(cpu.read(cpu::REG_L), *expect_l);
             assert_eq!(*val, cpu.read_dp(cpu::REG_A));
         }
+    }
+
+    /// ## WRITE_DP() Unit test - REG Address
+    ///
+    /// The following test will perform specific corner case testing of writing
+    /// a Double Precision value to a specific location in register space. The
+    /// test will verify the use of a 16-bit register
+    #[test]
+    fn cpu_test_tc_trap_reset_light() {
+        let mut cpu = init_agc();
+
+        let dur = std::time::Duration::from_secs(5);
+        std::thread::sleep(dur);
+        println!("Restarting AGC. Should indicate a RESTART light");
+        cpu.restart();
+        std::thread::sleep(dur);
     }
 }
