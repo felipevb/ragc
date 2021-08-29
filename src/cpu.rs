@@ -103,6 +103,7 @@ pub struct AgcCpu {
     nightwatch_cycles: u32,
 
     tc_count: u32,
+    non_tc_count: u32
 }
 
 impl AgcUnprogInstr for AgcCpu {
@@ -142,6 +143,7 @@ impl AgcUnprogInstr for AgcCpu {
         // Internal RAGC stuff:
         // Reset the NIGHT WATCHMAN, TC TRAP monitors
         self.tc_count = 0;
+        self.non_tc_count = 0;
 
         // Reset the CPU by resetting to address 0x800
         self.restart();
@@ -190,6 +192,7 @@ impl AgcCpu {
             nightwatch: 0,
             nightwatch_cycles: 0,
             tc_count: 0,
+            non_tc_count: 0
         };
 
         cpu.reset();
@@ -458,10 +461,12 @@ impl AgcCpu {
         // "Occurs if too many consecutive TC or TCF  instructions are run..."
         match inst.mnem {
             AgcMnem::TC | AgcMnem::TCF => {
+                self.non_tc_count = 0;
                 self.tc_count += 1;
             }
             _ => {
                 self.tc_count = 0;
+                self.non_tc_count += 1;
             }
         }
 
@@ -577,6 +582,13 @@ impl AgcCpu {
 
     fn handle_tc_trap(&mut self) {
         if self.tc_count >= TCMONITOR_COUNT {
+            self.tc_count = 0;
+
+            // Send GOJAM unprogram to restart the AGC.
+            debug!("TC TRAP Restart. Sending GOJ");
+            self.set_unprog_seq(AgcUnprogSeq::GOJ);
+        }
+        else if self.non_tc_count >= TCMONITOR_COUNT {
             self.tc_count = 0;
 
             // Send GOJAM unprogram to restart the AGC.
