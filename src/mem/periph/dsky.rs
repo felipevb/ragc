@@ -264,8 +264,8 @@ impl DskyDisplay {
 
     pub fn get_channel_value(&mut self, channel_idx: usize) -> u16 {
         match channel_idx {
-            0o163 => { self.output_flags & 0o1771 }
-            _ => { 0o00000 }
+            0o163 => self.output_flags & 0o1771,
+            _ => 0o00000,
         }
     }
 
