@@ -1,11 +1,11 @@
 use crate::utils::generate_yaagc_packet;
 
-use crossbeam_channel::{Sender, Receiver, unbounded};
+use crossbeam_channel::{unbounded, Receiver, Sender};
 use std::io::Write;
 use std::net::TcpListener;
 
 pub struct DownruptPeriph {
-    tx: Sender<[u8; 4]>
+    tx: Sender<[u8; 4]>,
 }
 
 fn downrupt_thread(rx: Receiver<[u8; 4]>) {
@@ -13,23 +13,21 @@ fn downrupt_thread(rx: Receiver<[u8; 4]>) {
     let listener = TcpListener::bind("127.0.0.1:19800").unwrap();
     for stream in listener.incoming() {
         match stream {
-            Ok(mut xa) => {
-                loop {
-                    let msg = match rx.recv() {
-                        Ok(x) => x,
-                        _ => {
-                            break;
-                        }
-                    };
+            Ok(mut xa) => loop {
+                let msg = match rx.recv() {
+                    Ok(x) => x,
+                    _ => {
+                        break;
+                    }
+                };
 
-                    match xa.write_all(&msg) {
-                        Ok(_x) => {}
-                        _ => {
-                            break;
-                        }
+                match xa.write_all(&msg) {
+                    Ok(_x) => {}
+                    _ => {
+                        break;
                     }
                 }
-            }
+            },
             _ => {}
         };
     }
@@ -49,9 +47,7 @@ impl DownruptPeriph {
         let (tx, rx) = unbounded();
 
         std::thread::spawn(move || downrupt_thread(rx));
-        DownruptPeriph {
-            tx: tx
-        }
+        DownruptPeriph { tx: tx }
     }
 
     ///

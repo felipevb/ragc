@@ -1,4 +1,4 @@
-use log::{debug, info, warn, trace};
+use log::{debug, info, trace, warn};
 
 use crossbeam_channel::Sender;
 
@@ -103,7 +103,7 @@ pub struct AgcCpu {
     nightwatch_cycles: u32,
 
     tc_count: u32,
-    non_tc_count: u32
+    non_tc_count: u32,
 }
 
 impl AgcUnprogInstr for AgcCpu {
@@ -112,15 +112,15 @@ impl AgcUnprogInstr for AgcCpu {
 
         // Within Memo #340, the following is listed on what GOJAM actions should
         // be performed.
-        self.write_io(5, 0);    // PYJETS
-        self.write_io(6, 0);    // ROLLJETS
-        self.write_io(10, 0);   // DSKY
-        self.write_io(11, 0);   // DSALMOUT
-        self.write_io(12, 0);   // 12
-        self.write_io(13, 0);   // 13
-        self.write_io(13, 0);   // 14
-        self.write_io(34, 0);   // DOWNWORD1
-        self.write_io(34, 0);   // DOWNWORD2
+        self.write_io(5, 0); // PYJETS
+        self.write_io(6, 0); // ROLLJETS
+        self.write_io(10, 0); // DSKY
+        self.write_io(11, 0); // DSALMOUT
+        self.write_io(12, 0); // 12
+        self.write_io(13, 0); // 13
+        self.write_io(13, 0); // 14
+        self.write_io(34, 0); // DOWNWORD1
+        self.write_io(34, 0); // DOWNWORD2
 
         // Clearing Bit 11 of Channel 33
         let val = self.read_io(33);
@@ -149,7 +149,6 @@ impl AgcUnprogInstr for AgcCpu {
         self.restart();
 
         2
-
     }
 }
 
@@ -192,7 +191,7 @@ impl AgcCpu {
             nightwatch: 0,
             nightwatch_cycles: 0,
             tc_count: 0,
-            non_tc_count: 0
+            non_tc_count: 0,
         };
 
         cpu.reset();
@@ -216,7 +215,6 @@ impl AgcCpu {
         let io_val = self.read_io(0o163);
         self.write_io(0o163, 0o200 | io_val);
     }
-
 
     pub fn update_pc(&mut self, val: u16) {
         self.write(REG_PC, val);
@@ -587,8 +585,7 @@ impl AgcCpu {
             // Send GOJAM unprogram to restart the AGC.
             debug!("TC TRAP Restart. Sending GOJ");
             self.set_unprog_seq(AgcUnprogSeq::GOJ);
-        }
-        else if self.non_tc_count >= TCMONITOR_COUNT {
+        } else if self.non_tc_count >= TCMONITOR_COUNT {
             self.tc_count = 0;
 
             // Send GOJAM unprogram to restart the AGC.
@@ -625,7 +622,6 @@ impl AgcCpu {
 
         // Update Timers based on instruction MCTs
         self.update_cycles();
-
 
         match instr {
             AgcUnprogSeq::GOJ => {
