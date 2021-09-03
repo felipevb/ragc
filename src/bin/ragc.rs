@@ -3,11 +3,8 @@ extern crate clap;
 use crossbeam_channel::unbounded;
 use env_logger;
 
-mod cpu;
-mod disasm;
-mod instr;
-mod mem;
-mod utils;
+use ragc::{mem, cpu};
+
 
 fn fetch_config<'a>() -> clap::ArgMatches<'a> {
     let about =
