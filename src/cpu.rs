@@ -45,9 +45,11 @@ pub const _RUPT_HANDRUPT: u8 = 0xA;
 pub const NIGHTWATCH_TIME: u32 = 1920000000 / 11700;
 
 // Each TC/TCF is 1 cycle, so we just need to have to know how many cycles it
-// takes for 300ms and thats how many TC/TCF instructions we have to see in
+// takes for 15ms and thats how many TC/TCF instructions we have to see in
 // sequence to reset.
 pub const TCMONITOR_COUNT: u32 = 15000000 / 11700;
+
+pub const RUPT_LOCK_COUNT: i32 = 300000000 / 11700;
 
 #[derive(Debug)]
 #[allow(dead_code)]
@@ -104,6 +106,8 @@ pub struct AgcCpu {
 
     tc_count: u32,
     non_tc_count: u32,
+
+    ruptlock_count: i32,
 }
 
 impl AgcUnprogInstr for AgcCpu {
@@ -192,6 +196,7 @@ impl AgcCpu {
             nightwatch_cycles: 0,
             tc_count: 0,
             non_tc_count: 0,
+            ruptlock_count: 0,
         };
 
         cpu.reset();
@@ -559,6 +564,34 @@ impl AgcCpu {
         info!("IR: {:x} | INDEX: {:x}", self.ir, self.idx_val);
     }
 
+    fn handle_ruptlock(&mut self) {
+        match self.is_irupt {
+            true => {
+                if self.ruptlock_count < 0 {
+                    self.ruptlock_count = 0;
+                }
+
+                self.ruptlock_count += self.cycles as i32;
+                if self.ruptlock_count > RUPT_LOCK_COUNT {
+                    debug!("RUPTLOCK Restart. Sending GOJ");
+                    self.set_unprog_seq(AgcUnprogSeq::GOJ);
+                }
+            },
+            false => {
+                if self.ruptlock_count > 0 {
+                    self.ruptlock_count = 0;
+                }
+
+                self.ruptlock_count -= self.cycles as i32;
+                if self.ruptlock_count < -RUPT_LOCK_COUNT {
+                    debug!("RUPTLOCK Restart. Sending GOJ");
+                    self.set_unprog_seq(AgcUnprogSeq::GOJ);
+                }
+
+            }
+        }
+    }
+
     fn handle_nightwatch(&mut self) {
         self.nightwatch_cycles += self.cycles as u32;
         if self.nightwatch_cycles >= NIGHTWATCH_TIME {
@@ -602,6 +635,7 @@ impl AgcCpu {
 
         self.handle_nightwatch();
         self.handle_tc_trap();
+        self.handle_ruptlock();
 
         let timers = self.mem.fetch_timers();
         self.rupt |= timers.pump_mcts(self.cycles, &mut self.unprog);
