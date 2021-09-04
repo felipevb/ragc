@@ -45,9 +45,11 @@ pub const _RUPT_HANDRUPT: u8 = 0xA;
 pub const NIGHTWATCH_TIME: u32 = 1920000000 / 11700;
 
 // Each TC/TCF is 1 cycle, so we just need to have to know how many cycles it
-// takes for 300ms and thats how many TC/TCF instructions we have to see in
+// takes for 15ms and thats how many TC/TCF instructions we have to see in
 // sequence to reset.
 pub const TCMONITOR_COUNT: u32 = 15000000 / 11700;
+
+pub const RUPT_LOCK_COUNT: i32 = 300000000 / 11700;
 
 #[derive(Debug)]
 #[allow(dead_code)]
@@ -104,6 +106,8 @@ pub struct AgcCpu {
 
     tc_count: u32,
     non_tc_count: u32,
+
+    ruptlock_count: i32,
 }
 
 impl AgcUnprogInstr for AgcCpu {
@@ -192,6 +196,7 @@ impl AgcCpu {
             nightwatch_cycles: 0,
             tc_count: 0,
             non_tc_count: 0,
+            ruptlock_count: 0,
         };
 
         cpu.reset();
@@ -559,6 +564,34 @@ impl AgcCpu {
         info!("IR: {:x} | INDEX: {:x}", self.ir, self.idx_val);
     }
 
+    fn handle_ruptlock(&mut self) {
+        match self.is_irupt {
+            true => {
+                if self.ruptlock_count < 0 {
+                    self.ruptlock_count = 0;
+                }
+
+                self.ruptlock_count += self.cycles as i32;
+                if self.ruptlock_count > RUPT_LOCK_COUNT {
+                    debug!("RUPTLOCK Restart. Sending GOJ");
+                    self.set_unprog_seq(AgcUnprogSeq::GOJ);
+                }
+            },
+            false => {
+                if self.ruptlock_count > 0 {
+                    self.ruptlock_count = 0;
+                }
+
+                self.ruptlock_count -= self.cycles as i32;
+                if self.ruptlock_count < -RUPT_LOCK_COUNT {
+                    debug!("RUPTLOCK Restart. Sending GOJ");
+                    self.set_unprog_seq(AgcUnprogSeq::GOJ);
+                }
+
+            }
+        }
+    }
+
     fn handle_nightwatch(&mut self) {
         self.nightwatch_cycles += self.cycles as u32;
         if self.nightwatch_cycles >= NIGHTWATCH_TIME {
@@ -586,7 +619,7 @@ impl AgcCpu {
             debug!("TC TRAP Restart. Sending GOJ");
             self.set_unprog_seq(AgcUnprogSeq::GOJ);
         } else if self.non_tc_count >= TCMONITOR_COUNT {
-            self.tc_count = 0;
+            self.non_tc_count = 0;
 
             // Send GOJAM unprogram to restart the AGC.
             debug!("TC TRAP Restart. Sending GOJ");
@@ -602,6 +635,7 @@ impl AgcCpu {
 
         self.handle_nightwatch();
         self.handle_tc_trap();
+        self.handle_ruptlock();
 
         let timers = self.mem.fetch_timers();
         self.rupt |= timers.pump_mcts(self.cycles, &mut self.unprog);
@@ -871,11 +905,6 @@ mod cpu_tests {
         }
     }
 
-    /// ## WRITE_DP() Unit test - REG Address
-    ///
-    /// The following test will perform specific corner case testing of writing
-    /// a Double Precision value to a specific location in register space. The
-    /// test will verify the use of a 16-bit register
     #[test]
     fn cpu_test_tc_trap_reset_light() {
         let mut cpu = init_agc();
@@ -885,5 +914,27 @@ mod cpu_tests {
         println!("Restarting AGC. Should indicate a RESTART light");
         cpu.restart();
         std::thread::sleep(dur);
+    }
+
+    #[test]
+    fn cpu_test_ruptlock_restart() {
+        let mut cpu = init_agc();
+
+        cpu.write(0o04000, 0o04001);
+        for i in 1..40 {
+            cpu.write(0o04000 + i, 0o24000);
+        }
+        cpu.write(0o04000 + 40, 0o04001);
+        cpu.restart();
+
+        cpu.is_irupt = true;
+        for _i in 0..12923 {
+            cpu.step();
+            assert_eq!(cpu.is_irupt, true);
+        }
+
+        cpu.step();
+        assert_eq!(0o4000, cpu.read(super::REG_PC));
+        assert_eq!(cpu.is_irupt, false);
     }
 }
