@@ -2,9 +2,6 @@ use crate::cpu;
 use crate::mem::AgcMemType;
 use log::trace;
 
-#[cfg(feature = "std")]
-use std::ops::Drop;
-
 /* Number of Banks within a given AGC computer */
 pub const RAM_NUM_BANKS: usize = 8;
 
@@ -102,9 +99,49 @@ impl AgcMemType for AgcRam {
 }
 
 #[cfg(feature = "std")]
-impl Drop for AgcRam {
-    fn drop(&mut self) {
-        trace!("AgcRam: Saving RAM state to file.");
+mod ramstd {
+    const DEFAULT_SAVESTATE_FILENAME: &str = ".ragcstate";
+    use super::{AgcRam, RAM_BANK_SIZE};
+
+    use std::ops::Drop;
+    use std::fs::File;
+    use std::io::prelude::{Write, Read};
+    use log::{trace, warn};
+
+    impl Drop for AgcRam {
+        fn drop(&mut self) {
+            trace!("AgcRam: Saving RAM state to file.");
+            let mut savefile = File::create(DEFAULT_SAVESTATE_FILENAME).unwrap();
+            for bank in self.banks.iter() {
+                for value in bank.iter() {
+                    savefile.write_all(&value.to_le_bytes()).unwrap();
+                }
+            }
+        }
+    }
+
+    impl AgcRam {
+        pub fn default() -> AgcRam {
+            let mut ram = AgcRam::new();
+            match File::open(DEFAULT_SAVESTATE_FILENAME) {
+                Ok(mut savefile) => {
+                    for bank_idx in 0..super::RAM_NUM_BANKS {
+                        let mut data: [u8; RAM_BANK_SIZE*2] = [0; RAM_BANK_SIZE*2];
+                        savefile.read_exact(&mut data).unwrap();
+                        ram.banks[bank_idx] = unsafe {
+                            std::mem::transmute::<[u8; RAM_BANK_SIZE*2], [u16; RAM_BANK_SIZE]>(data)
+                        };
+
+                    }
+                },
+                Err(x) => {
+                    trace!("Unable to open save state file: {:?}", x);
+                    warn!("Unable to open save state file for AgcRam.
+                           Starting with blank memory.");
+                }
+            }
+            ram
+        }
     }
 }
 

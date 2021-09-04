@@ -44,6 +44,9 @@ pub struct AgcMemoryMap {
 impl AgcMemoryMap {
     pub fn new_blank(rupt_tx: Sender<u8>, incr_rx: Receiver<()>) -> AgcMemoryMap {
         AgcMemoryMap {
+            #[cfg(feature = "std")]
+            ram: ram::AgcRam::default(),
+            #[cfg(not(feature = "std"))]
             ram: ram::AgcRam::new(),
             rom: rom::AgcRom::new(),
             edit: edit::AgcEditRegs::new(),
