@@ -1,8 +1,8 @@
 extern crate clap;
 
-use crossbeam_channel::{unbounded, bounded};
-use env_logger;
+use crossbeam_channel::{bounded, unbounded};
 use ctrlc;
+use env_logger;
 use log::error;
 
 use ragc::{cpu, mem};
@@ -47,7 +47,7 @@ fn main() {
         Err(x) => {
             error!("Unable to register signal handler. {:?}.", x);
             return;
-        },
+        }
         _ => {}
     }
 

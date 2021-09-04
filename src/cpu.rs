@@ -576,7 +576,7 @@ impl AgcCpu {
                     debug!("RUPTLOCK Restart. Sending GOJ");
                     self.set_unprog_seq(AgcUnprogSeq::GOJ);
                 }
-            },
+            }
             false => {
                 if self.ruptlock_count > 0 {
                     self.ruptlock_count = 0;
@@ -587,7 +587,6 @@ impl AgcCpu {
                     debug!("RUPTLOCK Restart. Sending GOJ");
                     self.set_unprog_seq(AgcUnprogSeq::GOJ);
                 }
-
             }
         }
     }
