@@ -1,7 +1,9 @@
 extern crate clap;
 
-use crossbeam_channel::unbounded;
+use crossbeam_channel::{bounded, unbounded};
+use ctrlc;
 use env_logger;
+use log::error;
 
 use ragc::{cpu, mem};
 
@@ -29,6 +31,26 @@ fn main() {
     //    })
     //    .filter(None, LevelFilter::Debug)
     //    .init();
+
+    // Register for a ctrlc handler which will push a signal to the application.
+    // If the signal handler is pushed multiple times without closing, then force
+    // closing the application and lose any close-ups of
+    let (ctrlc_tx, ctrlc_rx) = bounded(1);
+    let res = ctrlc::set_handler(move || {
+        if ctrlc_tx.is_full() == true {
+            std::process::exit(-1);
+        }
+        let _res = ctrlc_tx.send(());
+    });
+
+    match res {
+        Err(x) => {
+            error!("Unable to register signal handler. {:?}.", x);
+            return;
+        }
+        _ => {}
+    }
+
     let matches = fetch_config();
     let filename = matches.value_of("input").unwrap();
 
@@ -41,6 +63,12 @@ fn main() {
     _cpu.reset();
     let mut last_timestamp = std::time::Instant::now();
     loop {
+        // Check to see if we received a ctrlc signal. If we have, we need to
+        // exit out of the loop and exit the application.
+        if ctrlc_rx.len() > 0 {
+            break;
+        }
+
         if last_timestamp.elapsed().as_millis() == 0 {
             std::thread::sleep(std::time::Duration::new(0, 5000000));
             continue;

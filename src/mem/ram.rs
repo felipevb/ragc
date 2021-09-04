@@ -98,6 +98,57 @@ impl AgcMemType for AgcRam {
     }
 }
 
+#[cfg(feature = "std")]
+mod ramstd {
+    const DEFAULT_SAVESTATE_FILENAME: &str = ".ragcstate";
+    use super::{AgcRam, RAM_BANK_SIZE, RAM_NUM_BANKS};
+
+    use log::{trace, warn};
+    use std::fs::File;
+    use std::io::prelude::{Read, Write};
+    use std::ops::Drop;
+
+    impl Drop for AgcRam {
+        fn drop(&mut self) {
+            trace!("AgcRam: Saving RAM state to file.");
+            let mut savefile = File::create(DEFAULT_SAVESTATE_FILENAME).unwrap();
+            for bank in self.banks.iter() {
+                for value in bank.iter() {
+                    savefile.write_all(&value.to_le_bytes()).unwrap();
+                }
+            }
+        }
+    }
+
+    impl AgcRam {
+        pub fn default() -> AgcRam {
+            let mut ram = AgcRam::new();
+            match File::open(DEFAULT_SAVESTATE_FILENAME) {
+                Ok(mut savefile) => {
+                    let mut data: [u8; RAM_BANK_SIZE * RAM_NUM_BANKS * 2] =
+                        [0; RAM_BANK_SIZE * RAM_NUM_BANKS * 2];
+                    savefile.read_exact(&mut data).unwrap();
+
+                    ram.banks = unsafe {
+                        std::mem::transmute::<
+                            [u8; RAM_BANK_SIZE * RAM_NUM_BANKS * 2],
+                            [[u16; RAM_BANK_SIZE]; RAM_NUM_BANKS],
+                        >(data)
+                    };
+                }
+                Err(x) => {
+                    trace!("Unable to open save state file: {:?}", x);
+                    warn!(
+                        "Unable to open save state file for AgcRam.
+                           Starting with blank memory."
+                    );
+                }
+            }
+            ram
+        }
+    }
+}
+
 #[cfg(test)]
 mod agc_ram_tests {
     use super::*;
