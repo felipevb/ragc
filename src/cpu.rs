@@ -619,7 +619,7 @@ impl AgcCpu {
             debug!("TC TRAP Restart. Sending GOJ");
             self.set_unprog_seq(AgcUnprogSeq::GOJ);
         } else if self.non_tc_count >= TCMONITOR_COUNT {
-            self.tc_count = 0;
+            self.non_tc_count = 0;
 
             // Send GOJAM unprogram to restart the AGC.
             debug!("TC TRAP Restart. Sending GOJ");
@@ -905,11 +905,6 @@ mod cpu_tests {
         }
     }
 
-    /// ## WRITE_DP() Unit test - REG Address
-    ///
-    /// The following test will perform specific corner case testing of writing
-    /// a Double Precision value to a specific location in register space. The
-    /// test will verify the use of a 16-bit register
     #[test]
     fn cpu_test_tc_trap_reset_light() {
         let mut cpu = init_agc();
@@ -919,5 +914,27 @@ mod cpu_tests {
         println!("Restarting AGC. Should indicate a RESTART light");
         cpu.restart();
         std::thread::sleep(dur);
+    }
+
+    #[test]
+    fn cpu_test_ruptlock_restart() {
+        let mut cpu = init_agc();
+
+        cpu.write(0o04000, 0o04001);
+        for i in 1..40 {
+            cpu.write(0o04000 + i, 0o24000);
+        }
+        cpu.write(0o04000 + 40, 0o04001);
+        cpu.restart();
+
+        cpu.is_irupt = true;
+        for _i in 0..12923 {
+            cpu.step();
+            assert_eq!(cpu.is_irupt, true);
+        }
+
+        cpu.step();
+        assert_eq!(0o4000, cpu.read(super::REG_PC));
+        assert_eq!(cpu.is_irupt, false);
     }
 }
