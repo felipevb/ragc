@@ -17,12 +17,7 @@ fn fetch_config<'a>() -> clap::ArgMatches<'a> {
             clap::Arg::with_name("input")
                 .required(true)
                 .help("Input Firmware File to Run"),
-        )
-        .arg(
-            clap::Arg::with_name("state")
-                .required(false)
-                .help("RAM state from prior ragc run")
-    );
+        );
     let a = c.get_matches();
     a
 }
