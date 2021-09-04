@@ -2,6 +2,9 @@ use crate::cpu;
 use crate::mem::AgcMemType;
 use log::trace;
 
+#[cfg(feature = "std")]
+use std::ops::Drop;
+
 /* Number of Banks within a given AGC computer */
 pub const RAM_NUM_BANKS: usize = 8;
 
@@ -97,6 +100,14 @@ impl AgcMemType for AgcRam {
         }
     }
 }
+
+#[cfg(feature = "std")]
+impl Drop for AgcRam {
+    fn drop(&mut self) {
+        trace!("AgcRam: Saving RAM state to file.");
+    }
+}
+
 
 #[cfg(test)]
 mod agc_ram_tests {
