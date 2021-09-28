@@ -6,13 +6,12 @@ use crossbeam_channel::unbounded;
 #[allow(dead_code)]
 pub fn init_agc() -> AgcCpu {
     let (rupt_tx, _rupt_rx) = unbounded();
-    let (incr_tx, incr_rx) = unbounded();
 
-    let mut mm = mem::AgcMemoryMap::new_blank(rupt_tx, incr_rx);
+    let mut mm = mem::AgcMemoryMap::new_blank(rupt_tx);
     mm.enable_rom_write();
     //let mut iospace = mem::AgcIoSpace::new(mm.clone());
     //let mut _cpu = cpu::AgcCpu::new(mm, iospace, incr_tx);
-    let mut _cpu = cpu::AgcCpu::new(mm, incr_tx);
+    let mut _cpu = cpu::AgcCpu::new(mm);
 
     _cpu
 }

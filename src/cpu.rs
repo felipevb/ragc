@@ -1,7 +1,5 @@
 use log::{debug, info, trace, warn};
 
-use crossbeam_channel::Sender;
-
 use crate::disasm::disasm;
 use crate::instr::{AgcArith, AgcControlFlow, AgcInterrupt, AgcIo, AgcLoadStore, AgcLogic};
 use crate::instr::{AgcInst, AgcMnem};
@@ -99,7 +97,6 @@ pub struct AgcCpu {
 
     unprog: std::collections::VecDeque<AgcUnprogSeq>,
     pub rupt: u16,
-    incr_tx: Sender<()>,
 
     nightwatch: u16,
     nightwatch_cycles: u32,
@@ -173,14 +170,12 @@ impl AgcCpu {
         inst_data
     }
 
-    pub fn new(memmap: AgcMemoryMap, incr_tx: Sender<()>) -> AgcCpu {
+    pub fn new(memmap: AgcMemoryMap) -> AgcCpu {
         let mut cpu = AgcCpu {
             mem: memmap,
             ir: 0x0,
             ec_flag: false,
             idx_val: 0x0,
-            incr_tx: incr_tx,
-
             unprog: std::collections::VecDeque::new(),
 
             total_cycles: 0,

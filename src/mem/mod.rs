@@ -10,7 +10,7 @@ mod timer;
 
 pub use io::AgcIoSpace;
 
-use crossbeam_channel::{Receiver, Sender};
+use crossbeam_channel::Sender;
 use log::{error, trace};
 
 const _AGC_MM_RAMSIZE: usize = 1024;
@@ -42,7 +42,7 @@ pub struct AgcMemoryMap {
 }
 
 impl AgcMemoryMap {
-    pub fn new_blank(rupt_tx: Sender<u8>, incr_rx: Receiver<()>) -> AgcMemoryMap {
+    pub fn new_blank(rupt_tx: Sender<u8>) -> AgcMemoryMap {
         AgcMemoryMap {
             #[cfg(feature = "std")]
             ram: ram::AgcRam::default(),
@@ -51,7 +51,7 @@ impl AgcMemoryMap {
             rom: rom::AgcRom::new(),
             edit: edit::AgcEditRegs::new(),
             io: io::AgcIoSpace::new(),
-            special: special::AgcSpecialRegs::new(rupt_tx, incr_rx),
+            special: special::AgcSpecialRegs::new(rupt_tx),
             timers: timer::AgcTimers::new(),
             regs: regs::AgcRegs::new(),
             superbank: false,
@@ -59,8 +59,8 @@ impl AgcMemoryMap {
         }
     }
 
-    pub fn new(filename: &str, rupt_tx: Sender<u8>, incr_rx: Receiver<()>) -> AgcMemoryMap {
-        let mut mm = AgcMemoryMap::new_blank(rupt_tx, incr_rx);
+    pub fn new(filename: &str, rupt_tx: Sender<u8>) -> AgcMemoryMap {
+        let mut mm = AgcMemoryMap::new_blank(rupt_tx);
         mm.rom.load_agcbin_file(filename);
         mm
     }
@@ -269,10 +269,9 @@ mod agc_memory_map_tests {
     ///
     fn init_static_mem() -> AgcMemoryMap {
         let (tx1, _rx1) = unbounded();
-        let (_tx2, rx2) = unbounded();
 
         let rom = init_static_rom();
-        let mut mem = AgcMemoryMap::new_blank(tx1, rx2);
+        let mut mem = AgcMemoryMap::new_blank(tx1);
         mem.rom = rom;
         mem
     }
@@ -360,9 +359,8 @@ mod agc_memory_map_tests {
     ///
     fn test_time6_enable_disable() {
         let (tx, _rx) = unbounded();
-        let (_tx1, rx1) = unbounded();
 
-        let mut mm = AgcMemoryMap::new_blank(tx, rx1);
+        let mut mm = AgcMemoryMap::new_blank(tx);
 
         // Test to ensure the TIME6 is disabled via the IO Bit 15
         // By default, this should be disabled when first booted.
@@ -433,9 +431,8 @@ mod agc_memory_map_tests {
     ///
     fn test_time6_trupt_disable() {
         let (tx, _rx) = unbounded();
-        let (_tx1, rx1) = unbounded();
 
-        let mut mm = AgcMemoryMap::new_blank(tx, rx1);
+        let mut mm = AgcMemoryMap::new_blank(tx);
 
         // Put a default value into the timer to set a baseline to see if
         // TIME6 is truely disabled to start.
@@ -477,9 +474,8 @@ mod agc_memory_map_tests {
     ///
     fn test_io_reg_l_and_q() {
         let (tx, _rx) = unbounded();
-        let (_tx1, rx1) = unbounded();
 
-        let mut mm = AgcMemoryMap::new_blank(tx, rx1);
+        let mut mm = AgcMemoryMap::new_blank(tx);
         for i in 0o000000..=0o177777 {
             mm.write(crate::cpu::REG_Q, i);
             mm.write(crate::cpu::REG_L, i);
@@ -500,8 +496,7 @@ mod agc_memory_map_tests {
     ///
     fn test_scalar_registers() {
         let (tx, _rx) = unbounded();
-        let (_tx1, rx1) = unbounded();
-        let mut mm = AgcMemoryMap::new_blank(tx, rx1);
+        let mut mm = AgcMemoryMap::new_blank(tx);
         let mut unprog = std::collections::VecDeque::new();
 
         assert_eq!(0, mm.read_io(super::io::CHANNEL_HISCALAR), "Mismatch");

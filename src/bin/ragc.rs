@@ -55,10 +55,9 @@ fn main() {
     let filename = matches.value_of("input").unwrap();
 
     let (rupt_tx, _rupt_rx) = unbounded();
-    let (incr_tx, incr_rx) = unbounded();
 
-    let mm = mem::AgcMemoryMap::new(&filename, rupt_tx, incr_rx);
-    let mut _cpu = cpu::AgcCpu::new(mm, incr_tx);
+    let mm = mem::AgcMemoryMap::new(&filename, rupt_tx);
+    let mut _cpu = cpu::AgcCpu::new(mm);
 
     _cpu.reset();
     let mut last_timestamp = std::time::Instant::now();
