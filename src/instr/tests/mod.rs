@@ -1,16 +1,15 @@
 use crate::cpu;
 use crate::cpu::AgcCpu;
 use crate::mem;
-use crossbeam_channel::unbounded;
+use heapless::spsc::Queue;
 
 #[allow(dead_code)]
 pub fn init_agc() -> AgcCpu {
-    let (rupt_tx, _rupt_rx) = unbounded();
+    let mut rupt_queue = Queue::new();
+    let (rupt_tx, _rupt_rx) = rupt_queue.split();
 
     let mut mm = mem::AgcMemoryMap::new_blank(rupt_tx);
     mm.enable_rom_write();
-    //let mut iospace = mem::AgcIoSpace::new(mm.clone());
-    //let mut _cpu = cpu::AgcCpu::new(mm, iospace, incr_tx);
     let mut _cpu = cpu::AgcCpu::new(mm);
 
     _cpu

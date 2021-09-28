@@ -1,6 +1,6 @@
 extern crate clap;
 
-use crossbeam_channel::{bounded, unbounded};
+use crossbeam_channel::bounded;
 use ctrlc;
 use env_logger;
 use log::error;
@@ -54,7 +54,8 @@ fn main() {
     let matches = fetch_config();
     let filename = matches.value_of("input").unwrap();
 
-    let (rupt_tx, _rupt_rx) = unbounded();
+    let mut q1 = heapless::spsc::Queue::new();
+    let (rupt_tx, _rupt_rx) = q1.split();
 
     let mm = mem::AgcMemoryMap::new(&filename, rupt_tx);
     let mut _cpu = cpu::AgcCpu::new(mm);

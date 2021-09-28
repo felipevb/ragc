@@ -1,5 +1,5 @@
 use crate::mem::AgcMemType;
-use crossbeam_channel::Sender;
+use heapless::spsc::{Consumer, Producer};
 use log::{error, warn};
 
 const SG_CDUX: usize = 0o32;
@@ -49,7 +49,7 @@ pub struct AgcSpecialRegs {
 // Implementations
 // =============================================================================
 impl AgcSpecialRegs {
-    pub fn new(_rupt_tx: Sender<u8>) -> Self {
+    pub fn new(_rupt_tx: Producer<u8, 8>) -> Self {
         Self {
             cdu: (0, 0, 0),
             inlink: 0,
