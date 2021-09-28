@@ -95,7 +95,7 @@ pub struct AgcCpu {
     pub gint: bool,
     pub is_irupt: bool,
 
-    unprog: std::collections::VecDeque<AgcUnprogSeq>,
+    unprog: heapless::Deque<AgcUnprogSeq, 8>,
     pub rupt: u16,
 
     nightwatch: u16,
@@ -176,7 +176,7 @@ impl AgcCpu {
             ir: 0x0,
             ec_flag: false,
             idx_val: 0x0,
-            unprog: std::collections::VecDeque::new(),
+            unprog: heapless::Deque::new(),
 
             total_cycles: 0,
             cycles: 0,

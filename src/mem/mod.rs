@@ -246,6 +246,7 @@ mod agc_memory_map_tests {
     use super::*;
     use crate::cpu;
     use crossbeam_channel::unbounded;
+    use heapless::Deque;
 
     ///
     /// Support function to initialize the ROM section of the AGU to a static
@@ -381,7 +382,7 @@ mod agc_memory_map_tests {
 
         // Move enought MCTs to trigger a TIME6 DINC to occur. In this case,
         // there should not be movement in TIME6 or any DINCs
-        let mut unprog = std::collections::VecDeque::new();
+        let mut unprog = Deque::new();
         for _i in 0..55 {
             mm.timers.pump_mcts(1, &mut unprog);
         }
@@ -444,7 +445,7 @@ mod agc_memory_map_tests {
 
         // Move enought MCTs to trigger a TIME6 DINC to occur. In this case,
         // there should not be movement in TIME6 or any DINCs
-        let mut unprog = std::collections::VecDeque::new();
+        let mut unprog = Deque::new();
         let mut interrupt_flags = 0;
         for _i in 0..200 {
             interrupt_flags |= mm.timers.pump_mcts(1, &mut unprog);
@@ -497,7 +498,7 @@ mod agc_memory_map_tests {
     fn test_scalar_registers() {
         let (tx, _rx) = unbounded();
         let mut mm = AgcMemoryMap::new_blank(tx);
-        let mut unprog = std::collections::VecDeque::new();
+        let mut unprog = Deque::new();
 
         assert_eq!(0, mm.read_io(super::io::CHANNEL_HISCALAR), "Mismatch");
         assert_eq!(0, mm.read_io(super::io::CHANNEL_LOSCALAR), "Mismatch");
