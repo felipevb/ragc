@@ -1,10 +1,10 @@
 use crate::cpu;
 use crate::cpu::AgcUnprogSeq;
-
 use crate::mem::AgcMemType;
 
-use log::debug;
-use std::collections::VecDeque;
+use heapless::Deque;
+
+use log::{debug, error};
 
 #[derive(Clone)]
 pub struct AgcTimers {
@@ -42,6 +42,15 @@ pub const MM_TIME3: usize = 0o26;
 pub const MM_TIME4: usize = 0o27;
 pub const MM_TIME5: usize = 0o30;
 pub const MM_TIME6: usize = 0o31;
+
+fn push_unprog_seq(unprog: &mut Deque<AgcUnprogSeq, 8>, seq: AgcUnprogSeq) {
+    match unprog.push_back(seq) {
+        Err(x) => {
+            error!("Unable to push {:?} into UnprogSeq Deque", x);
+        }
+        _ => {}
+    }
+}
 
 ///
 /// 0ms              2.5ms             5ms              7.5ms             10ms
@@ -95,7 +104,7 @@ impl AgcTimers {
         }
     }
 
-    fn increment_scaler(&mut self, unprog: &mut VecDeque<AgcUnprogSeq>) -> u16 {
+    fn increment_scaler(&mut self, unprog: &mut Deque<AgcUnprogSeq, 8>) -> u16 {
         let mut interrupt_mask = 0;
 
         self.scaler += 1;
@@ -105,20 +114,20 @@ impl AgcTimers {
             // Main timer + 5ms (Timer5)
             0 => {
                 debug!("SCALAR: TIMER5 Update");
-                unprog.push_back(AgcUnprogSeq::PINC);
+                push_unprog_seq(unprog, AgcUnprogSeq::PINC);
                 self.handle_timer5()
             }
             // Main Timer + 7.5ms (Timer4)
             8 => {
                 debug!("SCALAR: TIMER4 Update");
-                unprog.push_back(AgcUnprogSeq::PINC);
+                push_unprog_seq(unprog, AgcUnprogSeq::PINC);
                 self.handle_timer4()
             }
             // Main timer + 10ms (Timer1 / Timer3)
             16 => {
                 debug!("SCALAR: TIMER1/3 Update");
-                unprog.push_back(AgcUnprogSeq::PINC);
-                unprog.push_back(AgcUnprogSeq::PINC);
+                push_unprog_seq(unprog, AgcUnprogSeq::PINC);
+                push_unprog_seq(unprog, AgcUnprogSeq::PINC);
                 self.handle_timer1_timer3(unprog)
             }
 
@@ -142,7 +151,7 @@ impl AgcTimers {
                 } else {
                     // Otherwise, we do an ABS value decrement of TIME6 register.
                     // Per the documentation.
-                    unprog.push_back(AgcUnprogSeq::DINC);
+                    push_unprog_seq(unprog, AgcUnprogSeq::DINC);
                     if self.timer6 & 0o40000 == 0o40000 {
                         self.timer6 += 1;
                     } else {
@@ -156,7 +165,7 @@ impl AgcTimers {
         interrupt_mask
     }
 
-    pub fn pump_mcts(&mut self, mcts: u16, unprog: &mut VecDeque<AgcUnprogSeq>) -> u16 {
+    pub fn pump_mcts(&mut self, mcts: u16, unprog: &mut Deque<AgcUnprogSeq, 8>) -> u16 {
         let mut rupt = 0;
         debug!("SCALARcounter: {:?}", self.scaler_mcts);
         self.scaler_mcts += mcts * 3;
@@ -244,10 +253,10 @@ impl AgcTimers {
         //0
     }
 
-    pub fn handle_timer1_timer3(&mut self, unprog: &mut VecDeque<AgcUnprogSeq>) -> u16 {
+    pub fn handle_timer1_timer3(&mut self, unprog: &mut Deque<AgcUnprogSeq, 8>) -> u16 {
         self.timer1 += 1;
         if self.timer1 & 0o37777 == 0o00000 {
-            unprog.push_back(AgcUnprogSeq::PINC);
+            push_unprog_seq(unprog, AgcUnprogSeq::PINC);
         }
 
         self.timer3 = (self.timer3 + 1) & 0o77777;
@@ -419,7 +428,7 @@ mod timer_modules_tests {
     ///
     fn timer_pump_test() {
         let mut timers = super::AgcTimers::new();
-        let mut unprog = std::collections::VecDeque::new();
+        let mut unprog = heapless::Deque::new();
 
         for time_idx in 1..=5 {
             for _i in 0..855 {
@@ -470,7 +479,7 @@ mod timer_modules_tests {
     ///
     fn test_time1_overflow_increment() {
         let mut timers = super::AgcTimers::new();
-        let mut unprog = std::collections::VecDeque::new();
+        let mut unprog = heapless::Deque::new();
 
         timers.write(0, super::MM_TIME1, 0o37777);
         assert_eq!(
@@ -509,7 +518,7 @@ mod timer_modules_tests {
     ///
     fn test_time_overflow(time_idx: usize, interrupt_number: u8) {
         let mut timers = super::AgcTimers::new();
-        let mut unprog = std::collections::VecDeque::new();
+        let mut unprog = heapless::Deque::new();
 
         timers.write(0, time_idx, 0o37777);
         assert_eq!(
@@ -579,7 +588,7 @@ mod timer_modules_tests {
     ///
     fn test_time6_enable_disable() {
         let mut timers = super::AgcTimers::new();
-        let mut unprog = std::collections::VecDeque::new();
+        let mut unprog = heapless::Deque::new();
 
         for _i in 1..=5 {
             for _i in 0..54 {
@@ -616,7 +625,7 @@ mod timer_modules_tests {
     ///
     fn test_time6_interrupt_positive() {
         let mut timers = super::AgcTimers::new();
-        let mut unprog = std::collections::VecDeque::new();
+        let mut unprog = heapless::Deque::new();
 
         timers.set_time6_enable(true);
         timers.write(0, super::MM_TIME6, 0o1);
@@ -660,7 +669,7 @@ mod timer_modules_tests {
     ///
     fn test_time6_interrupt_negative() {
         let mut timers = super::AgcTimers::new();
-        let mut unprog = std::collections::VecDeque::new();
+        let mut unprog = heapless::Deque::new();
         let mut interrupt_flags = 0;
 
         // Enable the timer and prime it with a given value to test when the

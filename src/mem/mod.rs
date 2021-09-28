@@ -10,7 +10,8 @@ mod timer;
 
 pub use io::AgcIoSpace;
 
-use crossbeam_channel::Sender;
+use heapless::spsc::Producer;
+
 use log::{error, trace};
 
 const _AGC_MM_RAMSIZE: usize = 1024;
@@ -42,7 +43,7 @@ pub struct AgcMemoryMap {
 }
 
 impl AgcMemoryMap {
-    pub fn new_blank(rupt_tx: Sender<u8>) -> AgcMemoryMap {
+    pub fn new_blank(rupt_tx: Producer<u8, 8>) -> AgcMemoryMap {
         AgcMemoryMap {
             #[cfg(feature = "std")]
             ram: ram::AgcRam::default(),
@@ -59,7 +60,7 @@ impl AgcMemoryMap {
         }
     }
 
-    pub fn new(filename: &str, rupt_tx: Sender<u8>) -> AgcMemoryMap {
+    pub fn new(filename: &str, rupt_tx: Producer<u8, 8>) -> AgcMemoryMap {
         let mut mm = AgcMemoryMap::new_blank(rupt_tx);
         mm.rom.load_agcbin_file(filename);
         mm
@@ -245,7 +246,7 @@ impl AgcMemoryMap {
 mod agc_memory_map_tests {
     use super::*;
     use crate::cpu;
-    use crossbeam_channel::unbounded;
+    use heapless::Deque;
 
     ///
     /// Support function to initialize the ROM section of the AGU to a static
@@ -268,7 +269,8 @@ mod agc_memory_map_tests {
     /// accessors
     ///
     fn init_static_mem() -> AgcMemoryMap {
-        let (tx1, _rx1) = unbounded();
+        let mut q1: heapless::spsc::Queue<u8, 8> = heapless::spsc::Queue::new();
+        let (tx1, _rx1) = q1.split();
 
         let rom = init_static_rom();
         let mut mem = AgcMemoryMap::new_blank(tx1);
@@ -358,7 +360,8 @@ mod agc_memory_map_tests {
     ///  - TIME6 decrements
     ///
     fn test_time6_enable_disable() {
-        let (tx, _rx) = unbounded();
+        let mut q1: heapless::spsc::Queue<u8, 8> = heapless::spsc::Queue::new();
+        let (tx, _rx) = q1.split();
 
         let mut mm = AgcMemoryMap::new_blank(tx);
 
@@ -381,7 +384,7 @@ mod agc_memory_map_tests {
 
         // Move enought MCTs to trigger a TIME6 DINC to occur. In this case,
         // there should not be movement in TIME6 or any DINCs
-        let mut unprog = std::collections::VecDeque::new();
+        let mut unprog = Deque::new();
         for _i in 0..55 {
             mm.timers.pump_mcts(1, &mut unprog);
         }
@@ -430,7 +433,8 @@ mod agc_memory_map_tests {
     ///  - Bit is cleared when T6RUPT occurs
     ///
     fn test_time6_trupt_disable() {
-        let (tx, _rx) = unbounded();
+        let mut q1: heapless::spsc::Queue<u8, 8> = heapless::spsc::Queue::new();
+        let (tx, _rx) = q1.split();
 
         let mut mm = AgcMemoryMap::new_blank(tx);
 
@@ -444,7 +448,7 @@ mod agc_memory_map_tests {
 
         // Move enought MCTs to trigger a TIME6 DINC to occur. In this case,
         // there should not be movement in TIME6 or any DINCs
-        let mut unprog = std::collections::VecDeque::new();
+        let mut unprog = Deque::new();
         let mut interrupt_flags = 0;
         for _i in 0..200 {
             interrupt_flags |= mm.timers.pump_mcts(1, &mut unprog);
@@ -473,7 +477,8 @@ mod agc_memory_map_tests {
     /// # Description
     ///
     fn test_io_reg_l_and_q() {
-        let (tx, _rx) = unbounded();
+        let mut q1: heapless::spsc::Queue<u8, 8> = heapless::spsc::Queue::new();
+        let (tx, _rx) = q1.split();
 
         let mut mm = AgcMemoryMap::new_blank(tx);
         for i in 0o000000..=0o177777 {
@@ -495,9 +500,11 @@ mod agc_memory_map_tests {
     /// Testing the HISCALAR and LOSCALAR work as intended
     ///
     fn test_scalar_registers() {
-        let (tx, _rx) = unbounded();
+        let mut q1: heapless::spsc::Queue<u8, 8> = heapless::spsc::Queue::new();
+        let (tx, _rx) = q1.split();
+
         let mut mm = AgcMemoryMap::new_blank(tx);
-        let mut unprog = std::collections::VecDeque::new();
+        let mut unprog = Deque::new();
 
         assert_eq!(0, mm.read_io(super::io::CHANNEL_HISCALAR), "Mismatch");
         assert_eq!(0, mm.read_io(super::io::CHANNEL_LOSCALAR), "Mismatch");
