@@ -10,8 +10,7 @@ mod timer;
 
 pub use io::AgcIoSpace;
 
-use heapless::spsc::Producer as Sender;
-use heapless::spsc::Consumer as Receiver;
+use heapless::spsc::Producer;
 
 use log::{error, trace};
 
@@ -44,7 +43,7 @@ pub struct AgcMemoryMap {
 }
 
 impl AgcMemoryMap {
-    pub fn new_blank(rupt_tx: Sender<u8, 8>) -> AgcMemoryMap {
+    pub fn new_blank(rupt_tx: Producer<u8, 8>) -> AgcMemoryMap {
         AgcMemoryMap {
             #[cfg(feature = "std")]
             ram: ram::AgcRam::default(),
@@ -61,7 +60,7 @@ impl AgcMemoryMap {
         }
     }
 
-    pub fn new(filename: &str, rupt_tx: Sender<u8, 8>) -> AgcMemoryMap {
+    pub fn new(filename: &str, rupt_tx: Producer<u8, 8>) -> AgcMemoryMap {
         let mut mm = AgcMemoryMap::new_blank(rupt_tx);
         mm.rom.load_agcbin_file(filename);
         mm
@@ -247,7 +246,6 @@ impl AgcMemoryMap {
 mod agc_memory_map_tests {
     use super::*;
     use crate::cpu;
-    use crossbeam_channel::unbounded;
     use heapless::Deque;
 
     ///

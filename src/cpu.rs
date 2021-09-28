@@ -1,4 +1,4 @@
-use log::{debug, info, trace, warn};
+use log::{debug, info, trace, warn, error};
 
 use crate::disasm::disasm;
 use crate::instr::{AgcArith, AgcControlFlow, AgcInterrupt, AgcIo, AgcLoadStore, AgcLogic};
@@ -223,7 +223,12 @@ impl AgcCpu {
 
     pub fn set_unprog_seq(&mut self, unprog_type: AgcUnprogSeq) {
         debug!("Setting UnprogSeq: {:?}", unprog_type);
-        self.unprog.push_back(unprog_type);
+        match self.unprog.push_back(unprog_type) {
+            Err(x) => {
+                error!("Unable to push Unprogram Sequence {:?} in AgcCpu Queue", x);
+            },
+            _ => {}
+        }
     }
 
     pub fn check_editing(&mut self, k: usize) {
@@ -666,7 +671,7 @@ impl AgcCpu {
                 self.handle_rupt();
                 self.is_irupt = true;
 
-                self.unprog.push_back(AgcUnprogSeq::RUPT);
+                self.set_unprog_seq(AgcUnprogSeq::RUPT);
                 let inst_data = self.calculate_instr_data();
 
                 self.print_state();
@@ -706,7 +711,7 @@ impl AgcCpu {
                 self.handle_rupt();
                 self.is_irupt = true;
 
-                self.unprog.push_back(AgcUnprogSeq::RUPT);
+                self.set_unprog_seq(AgcUnprogSeq::RUPT);
                 let inst_data = self.calculate_instr_data();
 
                 let addr: usize = (self.read(REG_PC) & 0xFFFF) as usize;

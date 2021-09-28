@@ -1,5 +1,5 @@
 use crate::mem::AgcMemType;
-use heapless::spsc::{Consumer, Producer};
+use heapless::spsc::Producer;
 use log::{error, warn};
 
 const SG_CDUX: usize = 0o32;
