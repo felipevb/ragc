@@ -1,0 +1,12 @@
+name: ragc - Rust Build
+on: [push]
+jobs:
+  build-ragc-debug:
+    runs-on: ubuntu-latest
+    container:
+      image: rust:alpine
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - name: Build Rust Project (Debug)
+        run: cargo build
