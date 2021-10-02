@@ -2,6 +2,7 @@ name: ragc - Rust Build
 on: [push]
 jobs:
   build-ragc-debug:
+    runs-on: ubuntu-latest
     container:
       image: ubuntu:latest
     steps:
