@@ -3,7 +3,7 @@ use crate::cpu;
 use crate::cpu::*;
 
 pub trait AgcLogic {
-    fn mask(&mut self, inst: &AgcInst) -> bool;
+    fn mask(&mut self, inst: &AgcInst) -> u16;
 }
 
 impl AgcLogic for AgcCpu {
@@ -25,8 +25,7 @@ impl AgcLogic for AgcCpu {
     /// overflow-corrected accumulator, and the result is sign-extended to
     /// 16-bits before storage in A.
     ///
-    fn mask(&mut self, inst: &AgcInst) -> bool {
-        self.cycles = 2;
+    fn mask(&mut self, inst: &AgcInst) -> u16 {
         let k = inst.get_kaddr();
         match k {
             cpu::REG_A | cpu::REG_Q => {
@@ -41,6 +40,6 @@ impl AgcLogic for AgcCpu {
                 self.write_s15(REG_A, n & 0x7FFF);
             }
         };
-        true
+        2
     }
 }

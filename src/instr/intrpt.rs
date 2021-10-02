@@ -2,28 +2,24 @@ use super::AgcInst;
 use crate::cpu::*;
 
 pub trait AgcInterrupt {
-    fn inhint(&mut self, inst: &AgcInst) -> bool;
-    fn relint(&mut self, inst: &AgcInst) -> bool;
-    fn edrupt(&mut self, inst: &AgcInst) -> bool;
-    fn resume(&mut self, inst: &AgcInst) -> bool;
+    fn inhint(&mut self, inst: &AgcInst) -> u16;
+    fn relint(&mut self, inst: &AgcInst) -> u16;
+    fn edrupt(&mut self, inst: &AgcInst) -> u16;
+    fn resume(&mut self, inst: &AgcInst) -> u16;
 }
 
 impl AgcInterrupt for AgcCpu {
-    fn inhint(&mut self, _inst: &AgcInst) -> bool {
+    fn inhint(&mut self, _inst: &AgcInst) -> u16 {
         self.gint = false;
-        self.cycles = 1;
-        true
+        1
     }
 
-    fn relint(&mut self, _inst: &AgcInst) -> bool {
+    fn relint(&mut self, _inst: &AgcInst) -> u16 {
         self.gint = true;
-        self.cycles = 1;
-        true
+        1
     }
 
-    fn edrupt(&mut self, _inst: &AgcInst) -> bool {
-        self.cycles = 3;
-
+    fn edrupt(&mut self, _inst: &AgcInst) -> u16 {
         // Inhibits interrupts
         self.gint = false;
 
@@ -33,12 +29,10 @@ impl AgcInterrupt for AgcCpu {
         // TODO: Takes the next instruction from address 0
         //   which sounds like IR = *Addr(0)
 
-        false
+        3
     }
 
-    fn resume(&mut self, _inst: &AgcInst) -> bool {
-        self.cycles = 2;
-
+    fn resume(&mut self, _inst: &AgcInst) -> u16 {
         let val = self.read(REG_PC_SHADOW) - 1;
         self.write(REG_PC, val);
         self.ir = self.read(REG_IR);
@@ -48,7 +42,7 @@ impl AgcInterrupt for AgcCpu {
         self.gint = true;
         self.is_irupt = false;
 
-        false
+        2
     }
 }
 

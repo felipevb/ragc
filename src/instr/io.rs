@@ -5,13 +5,13 @@ use crate::utils::{overflow_correction, sign_extend};
 use log::debug;
 
 pub trait AgcIo {
-    fn ror(&mut self, inst: &AgcInst) -> bool;
-    fn rand(&mut self, inst: &AgcInst) -> bool;
-    fn wor(&mut self, inst: &AgcInst) -> bool;
-    fn wand(&mut self, inst: &AgcInst) -> bool;
-    fn read_instr(&mut self, inst: &AgcInst) -> bool;
-    fn write_instr(&mut self, inst: &AgcInst) -> bool;
-    fn rxor(&mut self, inst: &AgcInst) -> bool;
+    fn ror(&mut self, inst: &AgcInst) -> u16 ;
+    fn rand(&mut self, inst: &AgcInst) -> u16 ;
+    fn wor(&mut self, inst: &AgcInst) -> u16 ;
+    fn wand(&mut self, inst: &AgcInst) -> u16 ;
+    fn read_instr(&mut self, inst: &AgcInst) -> u16 ;
+    fn write_instr(&mut self, inst: &AgcInst) -> u16 ;
+    fn rxor(&mut self, inst: &AgcInst) -> u16 ;
 }
 
 impl AgcIo for AgcCpu {
@@ -33,9 +33,7 @@ impl AgcIo for AgcCpu {
     /// with the overflow-corrected accumulator, and the result is sign-extended
     /// to 16 bits before storage in A.
     ///
-    fn ror(&mut self, inst: &AgcInst) -> bool {
-        self.cycles = 2;
-
+    fn ror(&mut self, inst: &AgcInst) -> u16  {
         let k = inst.get_data_bits() & 0x1FF;
         let io_val = self.read_io(k as usize);
 
@@ -49,7 +47,7 @@ impl AgcIo for AgcCpu {
                 self.write_s15(REG_A, n & 0x7FFF);
             }
         };
-        true
+        2
     }
 
     ///
@@ -70,9 +68,7 @@ impl AgcIo for AgcCpu {
     /// with the overflow-corrected accumulator, and the result is sign-extended
     /// to 16 bits before storage in A.
     ///
-    fn rand(&mut self, inst: &AgcInst) -> bool {
-        self.cycles = 2;
-
+    fn rand(&mut self, inst: &AgcInst) -> u16  {
         let k = inst.get_data_bits() & 0x1FF;
         let io_val = self.read_io(k as usize);
 
@@ -86,7 +82,7 @@ impl AgcIo for AgcCpu {
                 self.write_s15(REG_A, n & 0x7FFF);
             }
         };
-        true
+        2
     }
 
     ///
@@ -107,9 +103,7 @@ impl AgcIo for AgcCpu {
     /// with the overflow-corrected accumulator, and the result is sign-extended
     /// to 16 bits before storage in A.
     ///
-    fn rxor(&mut self, inst: &AgcInst) -> bool {
-        self.cycles = 2;
-
+    fn rxor(&mut self, inst: &AgcInst) -> u16  {
         let k = inst.get_data_bits() & 0x1FF;
         let io_val = self.read_io(k as usize);
 
@@ -123,7 +117,7 @@ impl AgcIo for AgcCpu {
                 self.write_s15(REG_A, n & 0x7FFF);
             }
         };
-        true
+        2
     }
 
     ///
@@ -144,9 +138,7 @@ impl AgcIo for AgcCpu {
     /// destination is logically ORed with the overflow-corrected accumulator and
     /// stored to K, and the result is sign-extended to 16 bits before storage in A.
     ///
-    fn wor(&mut self, inst: &AgcInst) -> bool {
-        self.cycles = 2;
-
+    fn wor(&mut self, inst: &AgcInst) -> u16  {
         let k: usize = (inst.get_data_bits() & 0x1FF) as usize;
         let io_val = self.read_io(k);
 
@@ -164,7 +156,7 @@ impl AgcIo for AgcCpu {
                 self.write_io(k, n & 0x7FFF);
             }
         };
-        true
+        2
     }
 
     ///
@@ -185,9 +177,7 @@ impl AgcIo for AgcCpu {
     /// destination is logically ANDed with the overflow-corrected accumulator and
     /// stored to K, and the result is sign-extended to 16 bits before storage in A.
     ///
-    fn wand(&mut self, inst: &AgcInst) -> bool {
-        self.cycles = 2;
-
+    fn wand(&mut self, inst: &AgcInst) -> u16  {
         let k: usize = (inst.get_data_bits() & 0x1FF) as usize;
         let io_val = self.read_io(k);
 
@@ -203,7 +193,7 @@ impl AgcIo for AgcCpu {
                 self.write_io(k, n & 0x7FFF);
             }
         };
-        true
+        2
     }
 
     ///
@@ -218,16 +208,14 @@ impl AgcIo for AgcCpu {
     ///     the 16-bit value is read. Otherwise, value to sign extended and stored
     ///     into A register
     ///
-    fn read_instr(&mut self, inst: &AgcInst) -> bool {
-        self.cycles = 2;
-
+    fn read_instr(&mut self, inst: &AgcInst) -> u16  {
         let k = inst.get_data_bits() & 0x1FF;
         let io_val = match k {
             2 => self.read_io(k as usize),
             _ => sign_extend(self.read_io(k as usize)),
         };
         self.write_s16(REG_A, io_val);
-        true
+        2
     }
 
     ///
@@ -242,8 +230,8 @@ impl AgcIo for AgcCpu {
     ///     16-bit value of A is stored into K.  Otherwise, the value is
     ///     overflow-corrected before storage.
     ///
-    fn write_instr(&mut self, inst: &AgcInst) -> bool {
-        self.cycles = 2;
+    fn write_instr(&mut self, inst: &AgcInst) -> u16  {
+
 
         let k = inst.get_data_bits() & 0x1FF;
         let val = self.read_s16(REG_A);
@@ -255,7 +243,7 @@ impl AgcIo for AgcCpu {
                 self.write_io(k as usize, overflow_correction(val) & 0x7FFF);
             }
         }
-        true
+        2
     }
 }
 

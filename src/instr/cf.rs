@@ -4,22 +4,19 @@ use crate::cpu::*;
 use log::{error, warn};
 
 pub trait AgcControlFlow {
-    fn tcf(&mut self, inst: &AgcInst) -> bool;
-    fn bzf(&mut self, inst: &AgcInst) -> bool;
-    fn bzmf(&mut self, inst: &AgcInst) -> bool;
-    fn ccs(&mut self, inst: &AgcInst) -> bool;
-    fn tc(&mut self, inst: &AgcInst) -> bool;
+    fn tcf(&mut self, inst: &AgcInst) -> u16;
+    fn bzf(&mut self, inst: &AgcInst) -> u16;
+    fn bzmf(&mut self, inst: &AgcInst) -> u16;
+    fn ccs(&mut self, inst: &AgcInst) -> u16;
+    fn tc(&mut self, inst: &AgcInst) -> u16;
 }
 
 impl AgcControlFlow for AgcCpu {
-    fn bzf(&mut self, inst: &AgcInst) -> bool {
+    fn bzf(&mut self, inst: &AgcInst) -> u16 {
         self.ec_flag = false;
 
         let a = self.read(REG_A);
         match a {
-            // TODO: Fix to handle overflow handling in this. This needs to be
-            // checked because if there is an overflow, it is not treated as
-            // zero.
             0 | 0xFFFF => {
                 let next_addr = inst.get_data_bits() & 0xFFF;
                 if (next_addr & 0xC00) == 0x0 {
@@ -28,52 +25,46 @@ impl AgcControlFlow for AgcCpu {
 
                 self.write(REG_PC, next_addr);
                 self.ir = self.read(next_addr as usize);
-                self.cycles = 1;
-                false
+                1
             }
-            // Return
             _ => {
-                self.cycles = 1; //2 - TODO: Look into why the yaAGC is not doing this;
-                true
+                2
             }
         }
     }
 
-    fn tcf(&mut self, inst: &AgcInst) -> bool {
+    fn tcf(&mut self, inst: &AgcInst) -> u16 {
         let next_addr = inst.get_data_bits();
         self.update_pc(next_addr);
         self.ec_flag = false;
-        self.cycles = 1;
-        false
+        1
     }
 
-    fn bzmf(&mut self, inst: &AgcInst) -> bool {
+    fn bzmf(&mut self, inst: &AgcInst) -> u16 {
         let k = inst.get_data_bits();
         match k & 0xC00 {
             0x000 => {
                 error!("Invalid encoding for BZMF");
-                return true;
+                return 0
             }
             _ => {}
         }
 
         let a = self.read_s16(REG_A);
         match a {
-            _ if a > 0x0000 && a < 0x7FFF => {
-                self.cycles = 1; //2 - TODO: Look into why the yaAGC is not doing this;
-                true
+            _ if a > 0x0000 && a < 0x8000 => {
+                2
             }
             _ => {
                 self.write(REG_PC, k);
                 self.ir = self.read(k as usize);
-                self.cycles = 1;
                 self.ec_flag = false;
-                false
+                1
             }
         }
     }
 
-    fn ccs(&mut self, inst: &AgcInst) -> bool {
+    fn ccs(&mut self, inst: &AgcInst) -> u16 {
         let pc = self.read(REG_PC);
         let k = inst.get_kaddr_ram();
         let mut a = self.read_s16(k);
@@ -110,13 +101,10 @@ impl AgcControlFlow for AgcCpu {
         // edit registers.
         self.check_editing(k);
 
-        self.cycles = 2;
-        false
+        2
     }
 
-    fn tc(&mut self, inst: &AgcInst) -> bool {
-        self.cycles = 1;
-
+    fn tc(&mut self, inst: &AgcInst) -> u16 {
         let k = inst.get_data_bits();
         let pc = self.read(REG_PC);
 
@@ -128,7 +116,7 @@ impl AgcControlFlow for AgcCpu {
         self.write(REG_LR, pc);
         self.ec_flag = false;
 
-        false
+        1
     }
 }
 
