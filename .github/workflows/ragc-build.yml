@@ -21,5 +21,7 @@ jobs:
       matrix:
         test_name: [mem::timer]
     steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
       - name: Run Test ${{matrix.test_name}}
         run: cargo test ${{matrix.test_name}}
