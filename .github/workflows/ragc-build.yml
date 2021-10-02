@@ -19,7 +19,9 @@ jobs:
       build-ragc-debug
     strategy:
       matrix:
-        test_name: ["mem::timer"]
+        test_name: [
+          "mem::timer", "mem::tests", "mem::ram",
+          "mem::rom", "mem::edit", "utils::"]
     steps:
       - name: Check out repository code
         uses: actions/checkout@v2
