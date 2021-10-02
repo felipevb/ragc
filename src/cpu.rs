@@ -86,9 +86,7 @@ pub struct AgcCpu {
     pub ir: u16,
     pub idx_val: u16,
     pub ec_flag: bool,
-    //pub v: AgcOverflow,
     pub total_cycles: usize,
-    pub cycles: u16,
     mct_counter: f64,
     timer_counter: u8,
 
@@ -179,7 +177,6 @@ impl AgcCpu {
             unprog: heapless::Deque::new(),
 
             total_cycles: 0,
-            cycles: 0,
             mct_counter: 0.0,
             timer_counter: 0,
 
@@ -456,7 +453,7 @@ impl AgcCpu {
         }
     }
 
-    pub fn execute(&mut self, inst: &AgcInst) -> bool {
+    pub fn execute(&mut self, inst: &AgcInst) -> u16 {
         // Handle TC TRAP Instruction Counting. The way this will be implemented
         // based on the wording is to count how many continuous TC/TCF
         // instructions we receive. If it surpasses the threshold, to cause a
@@ -473,29 +470,28 @@ impl AgcCpu {
             }
         }
 
-        match inst.mnem {
-            AgcMnem::AD => return self.ad(&inst),
-            AgcMnem::ADS => return self.ads(&inst),
-            AgcMnem::AUG => return self.aug(&inst),
-            AgcMnem::BZF => return self.bzf(&inst),
-            AgcMnem::BZMF => return self.bzmf(&inst),
-            AgcMnem::CA => return self.ca(&inst),
-            AgcMnem::CCS => return self.ccs(&inst),
-            AgcMnem::CS => return self.cs(&inst),
-            AgcMnem::DAS => return self.das(&inst),
-            AgcMnem::DCA => return self.dca(&inst),
-            AgcMnem::DCS => return self.dcs(&inst),
-            AgcMnem::DIM => return self.dim(&inst),
-            AgcMnem::DXCH => return self.dxch(&inst),
-            AgcMnem::DV => return self.dv(&inst),
+        let cycles = match inst.mnem {
+            AgcMnem::AD => self.ad(&inst),
+            AgcMnem::ADS => self.ads(&inst),
+            AgcMnem::AUG => self.aug(&inst),
+            AgcMnem::BZF => self.bzf(&inst),
+            AgcMnem::BZMF => self.bzmf(&inst),
+            AgcMnem::CA => self.ca(&inst),
+            AgcMnem::CCS => self.ccs(&inst),
+            AgcMnem::CS => self.cs(&inst),
+            AgcMnem::DAS => self.das(&inst),
+            AgcMnem::DCA => self.dca(&inst),
+            AgcMnem::DCS => self.dcs(&inst),
+            AgcMnem::DIM => self.dim(&inst),
+            AgcMnem::DXCH => self.dxch(&inst),
+            AgcMnem::DV => self.dv(&inst),
             AgcMnem::EXTEND => {
-                self.cycles = 1;
                 self.ec_flag = true;
                 self.idx_val = 0x0;
+                1
             }
-            AgcMnem::INCR => return self.incr(&inst),
+            AgcMnem::INCR => self.incr(&inst),
             AgcMnem::INDEX => {
-                self.cycles = 2;
                 let bits = if inst.is_extended() {
                     inst.get_data_bits()
                 } else {
@@ -503,39 +499,38 @@ impl AgcCpu {
                 };
                 self.idx_val = self.read(inst.get_data_bits() as usize);
                 self.check_editing(bits as usize);
+                2
             }
-            AgcMnem::INHINT => return self.inhint(&inst),
-            AgcMnem::LXCH => return self.lxch(&inst),
-            AgcMnem::MASK => return self.mask(&inst),
-            AgcMnem::MP => return self.mp(&inst),
-            AgcMnem::MSU => return self.msu(&inst),
-            AgcMnem::QXCH => return self.qxch(&inst),
-            AgcMnem::RELINT => return self.relint(&inst),
-            AgcMnem::RESUME => return self.resume(&inst),
-            AgcMnem::ROR => return self.ror(&inst),
-            AgcMnem::RAND => return self.rand(&inst),
-            AgcMnem::READ => return self.read_instr(&inst),
-            AgcMnem::RXOR => return self.rxor(&inst),
-            AgcMnem::SU => return self.su(&inst),
-            AgcMnem::TC => return self.tc(&inst),
-            AgcMnem::TCF => return self.tcf(&inst),
-            AgcMnem::TS => return self.ts(&inst),
-            AgcMnem::WAND => return self.wand(&inst),
-            AgcMnem::WOR => return self.wor(&inst),
+            AgcMnem::INHINT => self.inhint(&inst),
+            AgcMnem::LXCH => self.lxch(&inst),
+            AgcMnem::MASK => self.mask(&inst),
+            AgcMnem::MP => self.mp(&inst),
+            AgcMnem::MSU => self.msu(&inst),
+            AgcMnem::QXCH => self.qxch(&inst),
+            AgcMnem::RELINT => self.relint(&inst),
+            AgcMnem::RESUME => self.resume(&inst),
+            AgcMnem::ROR => self.ror(&inst),
+            AgcMnem::RAND => self.rand(&inst),
+            AgcMnem::READ => self.read_instr(&inst),
+            AgcMnem::RXOR => self.rxor(&inst),
+            AgcMnem::SU => self.su(&inst),
+            AgcMnem::TC => self.tc(&inst),
+            AgcMnem::TCF => self.tcf(&inst),
+            AgcMnem::TS => self.ts(&inst),
+            AgcMnem::WAND => self.wand(&inst),
+            AgcMnem::WOR => self.wor(&inst),
             AgcMnem::WRITE => {
-                return self.write_instr(&inst);
+                self.write_instr(&inst)
             }
-            AgcMnem::XCH => return self.xch(&inst),
+            AgcMnem::XCH => self.xch(&inst),
             _ => {
                 warn!("Unimplemented Execution of Instruction: {:?}", inst.mnem);
                 self.ec_flag = false;
                 self.idx_val = 0x0;
+                0
             }
-        }
-
-        // Return true, which tells the CPU to update to the next
-        // PC address. Unless its a control flow instruction
-        true
+        };
+        cycles
     }
 
     pub fn print_state(&mut self) {
@@ -564,14 +559,14 @@ impl AgcCpu {
         info!("IR: {:x} | INDEX: {:x}", self.ir, self.idx_val);
     }
 
-    fn handle_ruptlock(&mut self) {
+    fn handle_ruptlock(&mut self, cycles: u16) {
         match self.is_irupt {
             true => {
                 if self.ruptlock_count < 0 {
                     self.ruptlock_count = 0;
                 }
 
-                self.ruptlock_count += self.cycles as i32;
+                self.ruptlock_count += cycles as i32;
                 if self.ruptlock_count > RUPT_LOCK_COUNT {
                     debug!("RUPTLOCK Restart. Sending GOJ");
                     self.set_unprog_seq(AgcUnprogSeq::GOJ);
@@ -582,7 +577,7 @@ impl AgcCpu {
                     self.ruptlock_count = 0;
                 }
 
-                self.ruptlock_count -= self.cycles as i32;
+                self.ruptlock_count -= cycles as i32;
                 if self.ruptlock_count < -RUPT_LOCK_COUNT {
                     debug!("RUPTLOCK Restart. Sending GOJ");
                     self.set_unprog_seq(AgcUnprogSeq::GOJ);
@@ -591,8 +586,8 @@ impl AgcCpu {
         }
     }
 
-    fn handle_nightwatch(&mut self) {
-        self.nightwatch_cycles += self.cycles as u32;
+    fn handle_nightwatch(&mut self, cycles: u16) {
+        self.nightwatch_cycles += cycles as u32;
         if self.nightwatch_cycles >= NIGHTWATCH_TIME {
             trace!("Checking Nightwatchman {:?}", self.nightwatch);
             self.nightwatch_cycles = 0;
@@ -626,23 +621,23 @@ impl AgcCpu {
         }
     }
 
-    fn update_cycles(&mut self) {
-        self.mct_counter += self.cycles as f64 * 12.0;
+    fn update_cycles(&mut self, cycles: u16) {
+        self.mct_counter += cycles as f64 * 12.0;
 
-        self.total_cycles += self.cycles as usize;
+        self.total_cycles += cycles as usize;
         debug!("TotalCyles: {:?}", self.total_cycles * 12);
 
-        self.handle_nightwatch();
+        self.handle_nightwatch(cycles);
         self.handle_tc_trap();
-        self.handle_ruptlock();
+        self.handle_ruptlock(cycles);
 
         let timers = self.mem.fetch_timers();
-        self.rupt |= timers.pump_mcts(self.cycles, &mut self.unprog);
+        self.rupt |= timers.pump_mcts(cycles, &mut self.unprog);
     }
 
-    fn step_unprogrammed(&mut self) -> bool {
+    fn step_unprogrammed(&mut self) -> u16 {
         let instr = self.unprog.pop_front().unwrap();
-        self.cycles = match instr {
+        let cycles = match instr {
             AgcUnprogSeq::GOJ => 2,
             AgcUnprogSeq::TCSAJ => 2,
             AgcUnprogSeq::STORE => 2,
@@ -654,12 +649,12 @@ impl AgcCpu {
         };
 
         // Update Timers based on instruction MCTs
-        self.update_cycles();
+        self.update_cycles(cycles);
 
         match instr {
             AgcUnprogSeq::GOJ => {
                 self.handle_goj();
-                return true;
+                return cycles;
             }
             _ => {}
         };
@@ -679,12 +674,10 @@ impl AgcCpu {
                 let addr: usize = (self.read(REG_PC) & 0xFFFF) as usize;
                 let i = disasm(addr as u16, inst_data).unwrap();
                 debug!("{:x?}++++", i);
-
-                return true;
             }
         }
 
-        false
+        cycles
 
         //// Check for any interrupts to service at the beginning of
         //// the step process, if we are allowed
@@ -700,7 +693,7 @@ impl AgcCpu {
         //info!("{:x?}------", i);
     }
 
-    fn step_programmed(&mut self) {
+    fn step_programmed(&mut self) -> u16 {
         // Check for any interrupts to service at the beginning of
         // the step process, if we are allowed
         self.print_state();
@@ -718,7 +711,7 @@ impl AgcCpu {
                 let i = disasm(addr as u16, inst_data).unwrap();
                 debug!("{:x?}++++", i);
 
-                return;
+                return 0;
             }
         }
 
@@ -754,28 +747,23 @@ impl AgcCpu {
         }
 
         //self.ir = self.read(next_pc as usize);
-        match self.execute(&i) {
-            true => {}
-            false => {}
-        }
-
-        self.update_cycles();
+        let cycles = self.execute(&i);
+        self.update_cycles(cycles);
+        cycles
     }
 
     pub fn step(&mut self) -> u16 {
         // Check to see if we have an unprogrammed sequence instruction
         // that was performed. If we did, create a bubble before executing
-        while self.unprog.len() > 0 {
+        if self.unprog.len() > 0 {
             //info!("StepUnprogrammed");
-            if self.step_unprogrammed() {
-                return self.cycles;
-            }
+            self.step_unprogrammed()
         }
-
-        // Execute Stepped programm and update timers based
-        // on instruction MCTs
-        self.step_programmed();
-        self.cycles
+        else {
+            // Execute Stepped programm and update timers based
+            // on instruction MCTs
+            self.step_programmed()
+        }
     }
 }
 

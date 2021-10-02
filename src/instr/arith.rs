@@ -77,23 +77,21 @@ mod convert_test {
 }
 
 pub trait AgcArith {
-    fn ad(&mut self, inst: &AgcInst) -> bool;
-    fn ads(&mut self, inst: &AgcInst) -> bool;
-    fn das(&mut self, inst: &AgcInst) -> bool;
-    fn aug(&mut self, inst: &AgcInst) -> bool;
-    fn mp(&mut self, inst: &AgcInst) -> bool;
+    fn ad(&mut self, inst: &AgcInst) -> u16;
+    fn ads(&mut self, inst: &AgcInst) -> u16;
+    fn das(&mut self, inst: &AgcInst) -> u16;
+    fn aug(&mut self, inst: &AgcInst) -> u16;
+    fn mp(&mut self, inst: &AgcInst) -> u16;
 
-    fn su(&mut self, inst: &AgcInst) -> bool;
-    fn msu(&mut self, inst: &AgcInst) -> bool;
-    fn incr(&mut self, inst: &AgcInst) -> bool;
-    fn dim(&mut self, inst: &AgcInst) -> bool;
-    fn dv(&mut self, inst: &AgcInst) -> bool;
+    fn su(&mut self, inst: &AgcInst) -> u16;
+    fn msu(&mut self, inst: &AgcInst) -> u16;
+    fn incr(&mut self, inst: &AgcInst) -> u16;
+    fn dim(&mut self, inst: &AgcInst) -> u16;
+    fn dv(&mut self, inst: &AgcInst) -> u16;
 }
 
 impl AgcArith for AgcCpu {
-    fn ad(&mut self, inst: &AgcInst) -> bool {
-        self.cycles = 2;
-
+    fn ad(&mut self, inst: &AgcInst) -> u16 {
         let a = self.read_s16(REG_A) as u16;
         let k = self.read_s16(inst.get_kaddr()) as u16;
 
@@ -105,12 +103,10 @@ impl AgcArith for AgcCpu {
         //debug!("A: {:x} | K: {:x} = R {:x}", a, k, res);
         self.write_s16(REG_A, (res & 0xFFFF) as u16);
         self.check_editing(inst.get_kaddr());
-        true
+        2
     }
 
-    fn ads(&mut self, inst: &AgcInst) -> bool {
-        self.cycles = 2;
-
+    fn ads(&mut self, inst: &AgcInst) -> u16 {
         let a = self.read_s16(REG_A) as u32;
         let k = self.read_s16(inst.get_kaddr_ram());
 
@@ -122,12 +118,10 @@ impl AgcArith for AgcCpu {
         let newval = (res & 0xFFFF) as u16;
         self.write_s16(REG_A, newval);
         self.write_s16(inst.get_kaddr_ram(), newval);
-        true
+        2
     }
 
-    fn das(&mut self, inst: &AgcInst) -> bool {
-        self.cycles = 3;
-
+    fn das(&mut self, inst: &AgcInst) -> u16 {
         let mut k = inst.get_kaddr_ram();
         if k > 0 {
             k -= 1;
@@ -169,12 +163,11 @@ impl AgcArith for AgcCpu {
 
         self.write_s16(k, res_upper);
         self.write_s16(k + 1, res_lower);
-        true
+        3
     }
 
-    fn aug(&mut self, inst: &AgcInst) -> bool {
+    fn aug(&mut self, inst: &AgcInst) -> u16 {
         let k = inst.get_kaddr_ram();
-        self.cycles = 2;
 
         match k {
             REG_A | REG_Q => {
@@ -203,7 +196,7 @@ impl AgcArith for AgcCpu {
             }
         }
 
-        true
+        2
     }
 
     ///
@@ -215,9 +208,7 @@ impl AgcArith for AgcCpu {
     /// ### Parameters
     ///  - `inst` - Agc Instruction Structure that has been disassembled
     ///
-    fn mp(&mut self, inst: &AgcInst) -> bool {
-        self.cycles = 3;
-
+    fn mp(&mut self, inst: &AgcInst) -> u16 {
         // Fetch the A and K values in preparation to multiply. Also capture the
         // sign values of each of these so we know what the result should be.
         // Get the Sign and Magnitude Bits from A
@@ -273,12 +264,10 @@ impl AgcArith for AgcCpu {
             }
         }
         self.write_dp(REG_A, res);
-        true
+        3
     }
 
-    fn incr(&mut self, inst: &AgcInst) -> bool {
-        self.cycles = 2;
-
+    fn incr(&mut self, inst: &AgcInst) -> u16 {
         let k = inst.get_kaddr_ram();
         let val: u32 = self.read(k) as u32;
         trace!("INCR: {:x}: {:x}", k, val);
@@ -297,7 +286,7 @@ impl AgcArith for AgcCpu {
         };
 
         self.write(k, (kval & 0o177777) as u16);
-        false
+        2
     }
 
     ///
@@ -309,9 +298,7 @@ impl AgcArith for AgcCpu {
     /// ### Parameters
     ///  - `inst` - Agc Instruction Structure that has been disassembled
     ///
-    fn su(&mut self, inst: &AgcInst) -> bool {
-        self.cycles = 2;
-
+    fn su(&mut self, inst: &AgcInst) -> u16 {
         let a = self.read_s16(REG_A);
         let kval = !self.read_s16(inst.get_kaddr_ram());
         let mut res: u32 = a as u32 + kval as u32;
@@ -320,7 +307,7 @@ impl AgcArith for AgcCpu {
         }
         self.write_s16(REG_A, (res & 0xFFFF) as u16);
         self.check_editing(inst.get_kaddr_ram());
-        false
+        2
     }
 
     ///
@@ -333,9 +320,7 @@ impl AgcArith for AgcCpu {
     /// ### Parameters
     ///  - `inst` - Agc Instruction Structure that has been disassembled
     ///
-    fn msu(&mut self, inst: &AgcInst) -> bool {
-        self.cycles = 2;
-
+    fn msu(&mut self, inst: &AgcInst) -> u16 {
         let k = inst.get_kaddr_ram();
         match k {
             REG_A | REG_Q => {
@@ -363,8 +348,7 @@ impl AgcArith for AgcCpu {
         }
 
         self.check_editing(k);
-
-        false
+        2
     }
 
     ///
@@ -377,9 +361,7 @@ impl AgcArith for AgcCpu {
     /// ### Parameters
     ///  - `inst` - Agc Instruction Structure that has been disassembled
     ///
-    fn dim(&mut self, inst: &AgcInst) -> bool {
-        self.cycles = 2;
-
+    fn dim(&mut self, inst: &AgcInst) -> u16 {
         let k = inst.get_kaddr_ram();
         let kval = self.read_s16(k);
         debug!("DIM: {:x}: {:x}", k, kval);
@@ -389,7 +371,7 @@ impl AgcArith for AgcCpu {
         match kval {
             // If we are +/-0, then we just nop and don't alter the K value
             // From here.
-            0o177777 | 0o00000 => false,
+            0o177777 | 0o00000 => {},
 
             // This means we are non-zero so we need to DIM the magnitude of
             // the value stored in K.
@@ -407,9 +389,10 @@ impl AgcArith for AgcCpu {
                         self.write_s16(k, kval - 1);
                     }
                 }
-                false
             }
-        }
+        };
+
+        2
     }
 
     ///
@@ -423,8 +406,7 @@ impl AgcArith for AgcCpu {
     ///   - `inst` - Instruction that was assembled to DV instruction
     ///
     ///
-    fn dv(&mut self, inst: &AgcInst) -> bool {
-        self.cycles = 6;
+    fn dv(&mut self, inst: &AgcInst) -> u16 {
         let zero_list = [0o77777, 0o00000];
 
         let divisor = self.read_s15(inst.get_kaddr_ram());
@@ -469,7 +451,7 @@ impl AgcArith for AgcCpu {
                     self.write_s15(REG_A, 0o40000);
                 }
             };
-            return true;
+            return 6;
         };
 
         // Dividend is now non-zero at this point.
@@ -484,12 +466,12 @@ impl AgcArith for AgcCpu {
                     self.write_s15(REG_A, 0o40000);
                 }
                 self.write_s15(REG_L, dividend_upper);
-                return true;
+                return 6;
             } else {
                 log::warn!("Undefined behavior!");
             }
 
-            return true;
+            return 6;
         }
 
         let dividend = convert_to_dp(dividend_upper, dividend_lower);
@@ -513,6 +495,6 @@ impl AgcArith for AgcCpu {
             }
         }
 
-        false
+        6
     }
 }

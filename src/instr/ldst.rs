@@ -5,21 +5,19 @@ use crate::utils;
 use log::debug;
 
 pub trait AgcLoadStore {
-    fn cs(&mut self, inst: &AgcInst) -> bool;
-    fn ca(&mut self, inst: &AgcInst) -> bool;
-    fn dcs(&mut self, inst: &AgcInst) -> bool;
-    fn dca(&mut self, inst: &AgcInst) -> bool;
-    fn xch(&mut self, inst: &AgcInst) -> bool;
-    fn dxch(&mut self, inst: &AgcInst) -> bool;
-    fn lxch(&mut self, inst: &AgcInst) -> bool;
-    fn qxch(&mut self, inst: &AgcInst) -> bool;
-    fn ts(&mut self, inst: &AgcInst) -> bool;
+    fn cs(&mut self, inst: &AgcInst) -> u16;
+    fn ca(&mut self, inst: &AgcInst) -> u16;
+    fn dcs(&mut self, inst: &AgcInst) -> u16;
+    fn dca(&mut self, inst: &AgcInst) -> u16;
+    fn xch(&mut self, inst: &AgcInst) -> u16;
+    fn dxch(&mut self, inst: &AgcInst) -> u16;
+    fn lxch(&mut self, inst: &AgcInst) -> u16;
+    fn qxch(&mut self, inst: &AgcInst) -> u16;
+    fn ts(&mut self, inst: &AgcInst) -> u16;
 }
 
 impl AgcLoadStore for AgcCpu {
-    fn cs(&mut self, inst: &AgcInst) -> bool {
-        self.cycles = 2;
-
+    fn cs(&mut self, inst: &AgcInst) -> u16 {
         let addr: usize = inst.get_data_bits() as usize;
         let mut val = self.read_s16(addr);
         //debug!("Addr/Val: {:x?}/{:x?}", addr, val);
@@ -28,12 +26,10 @@ impl AgcLoadStore for AgcCpu {
         val = val & 0xFFFF;
         self.write_s16(REG_A, val);
         self.check_editing(inst.get_kaddr());
-        true
+        2
     }
 
-    fn dcs(&mut self, inst: &AgcInst) -> bool {
-        self.cycles = 3;
-
+    fn dcs(&mut self, inst: &AgcInst) -> u16 {
         let k = inst.get_kaddr() - 1;
 
         let val_l = (!self.read_s16(k + 1)) & 0xFFFF;
@@ -45,12 +41,10 @@ impl AgcLoadStore for AgcCpu {
         self.check_editing(k + 1);
         self.check_editing(k);
 
-        true
+        3
     }
 
-    fn dca(&mut self, inst: &AgcInst) -> bool {
-        self.cycles = 3;
-
+    fn dca(&mut self, inst: &AgcInst) -> u16 {
         // To handle the odd case of "DCA L" instruction, we wil break this
         // up into multiple load and stores just like the hardware handles it.
         // In essence, this loads Q into A and L
@@ -65,12 +59,10 @@ impl AgcLoadStore for AgcCpu {
         self.check_editing(k + 1);
         self.check_editing(k);
 
-        true
+        3
     }
 
-    fn dxch(&mut self, inst: &AgcInst) -> bool {
-        self.cycles = 3;
-
+    fn dxch(&mut self, inst: &AgcInst) -> u16 {
         let kaddr = inst.get_kaddr_ram() - 1;
 
         let l = self.read_s16(REG_L);
@@ -91,12 +83,10 @@ impl AgcLoadStore for AgcCpu {
             _ => {}
         }
 
-        true
+        3
     }
 
-    fn lxch(&mut self, inst: &AgcInst) -> bool {
-        self.cycles = 2;
-
+    fn lxch(&mut self, inst: &AgcInst) -> u16 {
         let k = inst.get_kaddr_ram();
 
         let lval = self.read_s16(REG_L);
@@ -105,21 +95,18 @@ impl AgcLoadStore for AgcCpu {
         self.write_s16(REG_L, kval);
         self.write_s16(k, lval);
 
-        false
+        2
     }
 
-    fn ca(&mut self, inst: &AgcInst) -> bool {
-        self.cycles = 2;
-
+    fn ca(&mut self, inst: &AgcInst) -> u16 {
         let addr: usize = inst.get_data_bits() as usize;
         let val = self.read_s16(addr);
         self.write_s16(REG_A, val);
         self.check_editing(addr);
-        true
+        2
     }
 
-    fn ts(&mut self, inst: &AgcInst) -> bool {
-        self.cycles = 2;
+    fn ts(&mut self, inst: &AgcInst) -> u16 {
         let addr = inst.get_kaddr_ram();
         let a = self.read_s16(REG_A);
 
@@ -141,24 +128,20 @@ impl AgcLoadStore for AgcCpu {
 
         self.write_s16(addr, a);
         self.read(addr);
-        true
+        2
     }
 
-    fn qxch(&mut self, inst: &AgcInst) -> bool {
-        self.cycles = 2;
-
+    fn qxch(&mut self, inst: &AgcInst) -> u16 {
         let k = inst.get_kaddr_ram();
         let v = self.read_s16(k as usize);
         let v_q = self.read_s16(REG_LR);
 
         self.write_s16(k as usize, v_q);
         self.write_s16(REG_LR, v);
-        true
+        2
     }
 
-    fn xch(&mut self, inst: &AgcInst) -> bool {
-        self.cycles = 2;
-
+    fn xch(&mut self, inst: &AgcInst) -> u16 {
         let k = inst.get_kaddr_ram();
         let v = self.read_s16(k);
         let v_q = self.read_s16(REG_A);
@@ -171,7 +154,7 @@ impl AgcLoadStore for AgcCpu {
         );
         self.write_s16(k, utils::overflow_correction(v_q));
         self.write_s16(REG_A, v);
-        true
+        2
     }
 }
 
