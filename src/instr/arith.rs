@@ -43,7 +43,6 @@ fn convert_to_dp(upper: u16, lower: u16) -> u32 {
                     val |= crate::utils::s15_add(lower, 0o40000) as u32;
                     val
                 } else {
-                    log::warn!("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
                     let mut val: u32 = crate::utils::s15_add(upper, 0o00001) as u32;
                     val = val << 14;
                     val |= crate::utils::s15_add(lower, 0o37777) as u32;
@@ -51,7 +50,6 @@ fn convert_to_dp(upper: u16, lower: u16) -> u32 {
                 };
 
                 if res & 0o4000000000 == 0o4000000000 {
-                    log::warn!("Using this!");
                     res += 1;
                 }
                 res & 0o3777777777
@@ -468,7 +466,7 @@ impl AgcArith for AgcCpu {
                 self.write_s15(REG_L, dividend_upper);
                 return 6;
             } else {
-                log::warn!("Undefined behavior!");
+                log::warn!("Undefined behavior for DV!");
             }
 
             return 6;
