@@ -19,7 +19,7 @@ jobs:
       build-ragc-debug
     strategy:
       matrix:
-        test_name: [mem::timer]
+        test_name: ["mem::timer"]
     steps:
       - name: Run Test ${{matrix.test_name}}
         run: cargo test ${{matrix.test_name}}
