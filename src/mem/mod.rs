@@ -46,7 +46,7 @@ impl AgcMemoryMap {
     pub fn new_blank(rupt_tx: Producer<u8, 8>) -> AgcMemoryMap {
         AgcMemoryMap {
             #[cfg(feature = "std")]
-            ram: ram::AgcRam::default(),
+            ram: ram::AgcRam::default(false),
             #[cfg(not(feature = "std"))]
             ram: ram::AgcRam::new(),
             rom: rom::AgcRom::new(),
