@@ -11,6 +11,8 @@ const RAM_BANK_SIZE: usize = 256;
 #[derive(Clone)]
 pub struct AgcRam {
     banks: [[u16; RAM_BANK_SIZE]; RAM_NUM_BANKS],
+    #[cfg(feature = "std")]
+    enable_savestate: bool,
 }
 
 impl AgcRam {
@@ -21,6 +23,7 @@ impl AgcRam {
     pub fn new() -> AgcRam {
         AgcRam {
             banks: [[0; RAM_BANK_SIZE]; RAM_NUM_BANKS],
+            enable_savestate: false,
         }
     }
 
@@ -121,27 +124,30 @@ mod ramstd {
     }
 
     impl AgcRam {
-        pub fn default() -> AgcRam {
+        pub fn default(enable_savestate: bool) -> AgcRam {
             let mut ram = AgcRam::new();
-            match File::open(DEFAULT_SAVESTATE_FILENAME) {
-                Ok(mut savefile) => {
-                    let mut data: [u8; RAM_BANK_SIZE * RAM_NUM_BANKS * 2] =
-                        [0; RAM_BANK_SIZE * RAM_NUM_BANKS * 2];
-                    savefile.read_exact(&mut data).unwrap();
+            if enable_savestate == true {
+                match File::open(DEFAULT_SAVESTATE_FILENAME) {
+                    Ok(mut savefile) => {
+                        let mut data: [u8; RAM_BANK_SIZE * RAM_NUM_BANKS * 2] =
+                            [0; RAM_BANK_SIZE * RAM_NUM_BANKS * 2];
+                        savefile.read_exact(&mut data).unwrap();
 
-                    ram.banks = unsafe {
-                        std::mem::transmute::<
-                            [u8; RAM_BANK_SIZE * RAM_NUM_BANKS * 2],
-                            [[u16; RAM_BANK_SIZE]; RAM_NUM_BANKS],
-                        >(data)
-                    };
-                }
-                Err(x) => {
-                    trace!("Unable to open save state file: {:?}", x);
-                    warn!(
-                        "Unable to open save state file for AgcRam.
-                           Starting with blank memory."
-                    );
+                        ram.banks = unsafe {
+                            std::mem::transmute::<
+                                [u8; RAM_BANK_SIZE * RAM_NUM_BANKS * 2],
+                                [[u16; RAM_BANK_SIZE]; RAM_NUM_BANKS],
+                            >(data)
+                        };
+                        ram.enable_savestate = true;
+                    }
+                    Err(x) => {
+                        trace!("Unable to open save state file: {:?}", x);
+                        warn!(
+                            "Unable to open save state file for AgcRam.
+                               Starting with blank memory."
+                        );
+                    }
                 }
             }
             ram
