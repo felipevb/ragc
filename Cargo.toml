@@ -1,18 +1,6 @@
-[package]
-name = "ragc"
-version = "0.1.0"
-authors = ["Felipe Vilas-Boas"]
-edition = "2018"
-license = "MIT OR Apache-2.0"
+[workspace]
 
-[dependencies]
-log = "0.4"
-env_logger = "0.8.4"
-crossbeam-channel = "0.5"
-clap = "2.33.3"
-ctrlc = "3.2.0"
-heapless = "*"
-
-[features]
-default = ["std"]
-std = []
+members = [
+    "ragc-core",
+    "ragc"
+]
