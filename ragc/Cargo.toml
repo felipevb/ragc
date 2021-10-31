@@ -1,0 +1,15 @@
+[package]
+name = "ragc"
+version = "0.1.0"
+authors = ["Felipe Vilas-Boas"]
+edition = "2018"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+clap = "2.33.3"
+log = "0.4"
+ctrlc = "3.2.0"
+heapless = "*"
+env_logger = "0.8.4"
+crossbeam-channel = "0.5"
+ragc-core = { path = "../ragc-core" }

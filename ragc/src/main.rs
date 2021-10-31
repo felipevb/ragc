@@ -5,7 +5,7 @@ use ctrlc;
 use env_logger;
 use log::error;
 
-use ragc::{cpu, mem};
+use ragc_core::{cpu, mem};
 
 fn fetch_config<'a>() -> clap::ArgMatches<'a> {
     let about =
