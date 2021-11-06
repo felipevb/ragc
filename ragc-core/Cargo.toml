@@ -9,7 +9,11 @@ license = "MIT OR Apache-2.0"
 log = "0.4"
 env_logger = "0.8.4"
 crossbeam-channel = "0.5"
-heapless = "*"
+heapless = "0.7.7"
+
+[dev-dependencies]
+ragc-ropes = {path = "../ragc-ropes"}
+
 
 [features]
 default = ["std"]
