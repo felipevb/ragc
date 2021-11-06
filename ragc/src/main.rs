@@ -6,6 +6,13 @@ use env_logger;
 use log::error;
 
 use ragc_core::{cpu, mem};
+use ragc_ropes;
+
+pub const ROM_BANKS_NUM: usize = 36;
+pub const ROM_BANK_NUM_WORDS: usize = 1024;
+
+use std::io::Read;
+use std::fs::File;
 
 fn fetch_config<'a>() -> clap::ArgMatches<'a> {
     let about =
@@ -22,15 +29,46 @@ fn fetch_config<'a>() -> clap::ArgMatches<'a> {
     a
 }
 
+fn load_agcbin_file(filename: &str) -> Option<[[u16; ROM_BANK_NUM_WORDS]; ROM_BANKS_NUM]> {
+    // Check to make sure we are able to open the file. If we are not
+    // able to, throw up the issue up to the caller to know we failed
+    // at opening the file.
+    let fp = File::open(filename);
+    let mut f = match fp {
+        Ok(f) => f,
+        _ => {
+            error!("Unable to open file: {:?}", filename);
+            return None;
+        }
+    };
+
+    let mut buf = [0; ROM_BANK_NUM_WORDS * 2];
+    let mut banks = [[0; ROM_BANK_NUM_WORDS]; ROM_BANKS_NUM];
+
+    let mut bank_idx = 0;
+    loop {
+        match f.read_exact(&mut buf) {
+            Ok(_x) => {
+                let mut word_idx = 0;
+                for c in buf.chunks_exact(2) {
+                    let res = (c[1] as u16) << 8 | c[0] as u16;
+                    banks[bank_idx][word_idx] = res; //res >> 1;
+                    word_idx += 1;
+                }
+            }
+            Err(_x) => {
+                break;
+            }
+        };
+        bank_idx += 1;
+    }
+
+    Some(banks)
+}
+
+
 fn main() {
     env_logger::init();
-    //env_logger::Builder::new()
-    //    .target(env_logger::Target::Stdout)
-    //    .format(|buf, record| {
-    //        writeln!(buf, "[{}] - {}", record.level(), record.args())
-    //    })
-    //    .filter(None, LevelFilter::Debug)
-    //    .init();
 
     // Register for a ctrlc handler which will push a signal to the application.
     // If the signal handler is pushed multiple times without closing, then force
@@ -54,31 +92,36 @@ fn main() {
     let matches = fetch_config();
     let filename = matches.value_of("input").unwrap();
 
+
     let mut q1 = heapless::spsc::Queue::new();
     let (rupt_tx, _rupt_rx) = q1.split();
 
-    let mm = mem::AgcMemoryMap::new(&filename, rupt_tx);
-    let mut _cpu = cpu::AgcCpu::new(mm);
+    let ropes = load_agcbin_file(&filename).unwrap();
+    if ropes.len() != 0 {
+        let mm = mem::AgcMemoryMap::new(&ropes, rupt_tx);
+        let mut _cpu = cpu::AgcCpu::new(mm);
 
-    _cpu.reset();
-    let mut last_timestamp = std::time::Instant::now();
-    loop {
-        // Check to see if we received a ctrlc signal. If we have, we need to
-        // exit out of the loop and exit the application.
-        if ctrlc_rx.len() > 0 {
-            break;
-        }
+        _cpu.reset();
+        let mut last_timestamp = std::time::Instant::now();
+        loop {
+            // Check to see if we received a ctrlc signal. If we have, we need to
+            // exit out of the loop and exit the application.
+            if ctrlc_rx.len() > 0 {
+                break;
+            }
 
-        if last_timestamp.elapsed().as_millis() == 0 {
-            std::thread::sleep(std::time::Duration::new(0, 5000000));
-            continue;
-        }
+            if last_timestamp.elapsed().as_millis() == 0 {
+                std::thread::sleep(std::time::Duration::new(0, 5000000));
+                continue;
+            }
 
-        let mut cycle_counter = 0;
-        let expected_cycles = ((last_timestamp.elapsed().as_micros() as f64) / 11.7) as i64;
-        while cycle_counter < expected_cycles {
-            cycle_counter += _cpu.step() as i64;
+            let mut cycle_counter = 0;
+            let expected_cycles = ((last_timestamp.elapsed().as_micros() as f64) / 11.7) as i64;
+            while cycle_counter < expected_cycles {
+                cycle_counter += _cpu.step() as i64;
+            }
+            last_timestamp = std::time::Instant::now();
         }
-        last_timestamp = std::time::Instant::now();
     }
+
 }
