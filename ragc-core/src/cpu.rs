@@ -81,8 +81,8 @@ trait AgcUnprogInstr {
 }
 
 #[allow(dead_code)]
-pub struct AgcCpu {
-    mem: AgcMemoryMap,
+pub struct AgcCpu<'a> {
+    mem: AgcMemoryMap<'a>,
     pub ir: u16,
     pub idx_val: u16,
     pub ec_flag: bool,
@@ -105,7 +105,7 @@ pub struct AgcCpu {
     ruptlock_count: i32,
 }
 
-impl AgcUnprogInstr for AgcCpu {
+impl <'a>AgcUnprogInstr for AgcCpu<'a> {
     fn handle_goj(&mut self) -> u16 {
         debug!("Handling GOJ (Restart of AGC)");
 
@@ -151,7 +151,7 @@ impl AgcUnprogInstr for AgcCpu {
     }
 }
 
-impl AgcCpu {
+impl <'a>AgcCpu<'a> {
     ///
     /// ## `calculate_instr_data` Function
     ///
