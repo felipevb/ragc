@@ -20,10 +20,25 @@ fn fetch_config<'a>() -> clap::ArgMatches<'a> {
     let c = clap::App::new("Rust Apollo Guidance Computer (RAGC)")
         .version("0.1")
         .about(about)
-        .arg(
-            clap::Arg::with_name("input")
-                .required(true)
-                .help("Input Firmware File to Run"),
+        .subcommand(
+            clap::SubCommand::with_name("retread50")
+                .help("Run AGC with RETREAD50 ROM and Configuration")
+        )
+        .subcommand(
+            clap::SubCommand::with_name("validation")
+                .help("Run AGC with VALIDATION ROM")
+        )
+        .subcommand(
+            clap::SubCommand::with_name("luminary131")
+                .help("Run AGC with LUMINARY131 ROM and Configuration")
+        )
+        .subcommand(
+            clap::SubCommand::with_name("file")
+                .help("Run ROM from agcbin file")
+                .arg(clap::Arg::with_name("filename")
+                    .index(1)
+                    .help("Filename of agcbin to load")
+            )
         );
     let a = c.get_matches();
     a
@@ -66,7 +81,6 @@ fn load_agcbin_file(filename: &str) -> Option<[[u16; ROM_BANK_NUM_WORDS]; ROM_BA
     Some(banks)
 }
 
-
 fn main() {
     env_logger::init();
 
@@ -90,38 +104,52 @@ fn main() {
     }
 
     let matches = fetch_config();
-    let filename = matches.value_of("input").unwrap();
-
+    let rope = match matches.subcommand_name() {
+        Some("retread50") => {
+            *ragc_ropes::RETREAD50_ROPE
+        }
+        Some("luminary131") => {
+            *ragc_ropes::LUMINARY131_ROPE
+        }
+        Some("validation") => {
+            *ragc_ropes::VALIDATION_ROPE
+        }
+        Some("file") => {
+            let sub_matches = matches.subcommand_matches("file").unwrap();
+            let filename = sub_matches.value_of("filename").unwrap();
+            load_agcbin_file(&filename).unwrap()
+        }
+        _ => {
+            error!("Invalid subcommand. Exiting");
+            return
+        }
+    };
 
     let mut q1 = heapless::spsc::Queue::new();
     let (rupt_tx, _rupt_rx) = q1.split();
 
-    let ropes = load_agcbin_file(&filename).unwrap();
-    if ropes.len() != 0 {
-        let mm = mem::AgcMemoryMap::new(&ropes, rupt_tx);
-        let mut _cpu = cpu::AgcCpu::new(mm);
+    let mm = mem::AgcMemoryMap::new(&rope, rupt_tx);
+    let mut _cpu = cpu::AgcCpu::new(mm);
 
-        _cpu.reset();
-        let mut last_timestamp = std::time::Instant::now();
-        loop {
-            // Check to see if we received a ctrlc signal. If we have, we need to
-            // exit out of the loop and exit the application.
-            if ctrlc_rx.len() > 0 {
-                break;
-            }
-
-            if last_timestamp.elapsed().as_millis() == 0 {
-                std::thread::sleep(std::time::Duration::new(0, 5000000));
-                continue;
-            }
-
-            let mut cycle_counter = 0;
-            let expected_cycles = ((last_timestamp.elapsed().as_micros() as f64) / 11.7) as i64;
-            while cycle_counter < expected_cycles {
-                cycle_counter += _cpu.step() as i64;
-            }
-            last_timestamp = std::time::Instant::now();
+    _cpu.reset();
+    let mut last_timestamp = std::time::Instant::now();
+    loop {
+        // Check to see if we received a ctrlc signal. If we have, we need to
+        // exit out of the loop and exit the application.
+        if ctrlc_rx.len() > 0 {
+            break;
         }
-    }
 
+        if last_timestamp.elapsed().as_millis() == 0 {
+            std::thread::sleep(std::time::Duration::new(0, 5000000));
+            continue;
+        }
+
+        let mut cycle_counter = 0;
+        let expected_cycles = ((last_timestamp.elapsed().as_micros() as f64) / 11.7) as i64;
+        while cycle_counter < expected_cycles {
+            cycle_counter += _cpu.step() as i64;
+        }
+        last_timestamp = std::time::Instant::now();
+    }
 }
