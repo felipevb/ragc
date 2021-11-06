@@ -88,7 +88,7 @@ pub trait AgcArith {
     fn dv(&mut self, inst: &AgcInst) -> u16;
 }
 
-impl AgcArith for AgcCpu {
+impl<'a> AgcArith for AgcCpu<'a> {
     fn ad(&mut self, inst: &AgcInst) -> u16 {
         let a = self.read_s16(REG_A) as u16;
         let k = self.read_s16(inst.get_kaddr()) as u16;

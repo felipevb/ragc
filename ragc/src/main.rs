@@ -6,6 +6,13 @@ use env_logger;
 use log::error;
 
 use ragc_core::{cpu, mem};
+use ragc_ropes;
+
+pub const ROM_BANKS_NUM: usize = 36;
+pub const ROM_BANK_NUM_WORDS: usize = 1024;
+
+use std::io::Read;
+use std::fs::File;
 
 fn fetch_config<'a>() -> clap::ArgMatches<'a> {
     let about =
@@ -13,24 +20,69 @@ fn fetch_config<'a>() -> clap::ArgMatches<'a> {
     let c = clap::App::new("Rust Apollo Guidance Computer (RAGC)")
         .version("0.1")
         .about(about)
-        .arg(
-            clap::Arg::with_name("input")
-                .required(true)
-                .help("Input Firmware File to Run"),
+        .subcommand(
+            clap::SubCommand::with_name("retread50")
+                .help("Run AGC with RETREAD50 ROM and Configuration")
+        )
+        .subcommand(
+            clap::SubCommand::with_name("validation")
+                .help("Run AGC with VALIDATION ROM")
+        )
+        .subcommand(
+            clap::SubCommand::with_name("luminary131")
+                .help("Run AGC with LUMINARY131 ROM and Configuration")
+        )
+        .subcommand(
+            clap::SubCommand::with_name("file")
+                .help("Run ROM from agcbin file")
+                .arg(clap::Arg::with_name("filename")
+                    .index(1)
+                    .help("Filename of agcbin to load")
+            )
         );
     let a = c.get_matches();
     a
 }
 
+fn load_agcbin_file(filename: &str) -> Option<[[u16; ROM_BANK_NUM_WORDS]; ROM_BANKS_NUM]> {
+    // Check to make sure we are able to open the file. If we are not
+    // able to, throw up the issue up to the caller to know we failed
+    // at opening the file.
+    let fp = File::open(filename);
+    let mut f = match fp {
+        Ok(f) => f,
+        _ => {
+            error!("Unable to open file: {:?}", filename);
+            return None;
+        }
+    };
+
+    let mut buf = [0; ROM_BANK_NUM_WORDS * 2];
+    let mut banks = [[0; ROM_BANK_NUM_WORDS]; ROM_BANKS_NUM];
+
+    let mut bank_idx = 0;
+    loop {
+        match f.read_exact(&mut buf) {
+            Ok(_x) => {
+                let mut word_idx = 0;
+                for c in buf.chunks_exact(2) {
+                    let res = (c[1] as u16) << 8 | c[0] as u16;
+                    banks[bank_idx][word_idx] = res; //res >> 1;
+                    word_idx += 1;
+                }
+            }
+            Err(_x) => {
+                break;
+            }
+        };
+        bank_idx += 1;
+    }
+
+    Some(banks)
+}
+
 fn main() {
     env_logger::init();
-    //env_logger::Builder::new()
-    //    .target(env_logger::Target::Stdout)
-    //    .format(|buf, record| {
-    //        writeln!(buf, "[{}] - {}", record.level(), record.args())
-    //    })
-    //    .filter(None, LevelFilter::Debug)
-    //    .init();
 
     // Register for a ctrlc handler which will push a signal to the application.
     // If the signal handler is pushed multiple times without closing, then force
@@ -52,12 +104,31 @@ fn main() {
     }
 
     let matches = fetch_config();
-    let filename = matches.value_of("input").unwrap();
+    let rope = match matches.subcommand_name() {
+        Some("retread50") => {
+            *ragc_ropes::RETREAD50_ROPE
+        }
+        Some("luminary131") => {
+            *ragc_ropes::LUMINARY131_ROPE
+        }
+        Some("validation") => {
+            *ragc_ropes::VALIDATION_ROPE
+        }
+        Some("file") => {
+            let sub_matches = matches.subcommand_matches("file").unwrap();
+            let filename = sub_matches.value_of("filename").unwrap();
+            load_agcbin_file(&filename).unwrap()
+        }
+        _ => {
+            error!("Invalid subcommand. Exiting");
+            return
+        }
+    };
 
     let mut q1 = heapless::spsc::Queue::new();
     let (rupt_tx, _rupt_rx) = q1.split();
 
-    let mm = mem::AgcMemoryMap::new(&filename, rupt_tx);
+    let mm = mem::AgcMemoryMap::new(&rope, rupt_tx);
     let mut _cpu = cpu::AgcCpu::new(mm);
 
     _cpu.reset();

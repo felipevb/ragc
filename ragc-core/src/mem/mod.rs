@@ -30,9 +30,9 @@ trait AgcMemType {
     fn write(&mut self, bank_idx: usize, bank_offset: usize, value: u16);
 }
 
-pub struct AgcMemoryMap {
+pub struct AgcMemoryMap<'a> {
     ram: ram::AgcRam,
-    rom: rom::AgcRom,
+    rom: rom::AgcRom<'a>,
     io: io::AgcIoSpace,
     edit: edit::AgcEditRegs,
     special: special::AgcSpecialRegs,
@@ -42,14 +42,14 @@ pub struct AgcMemoryMap {
     superbank: bool,
 }
 
-impl AgcMemoryMap {
+impl<'a> AgcMemoryMap<'a> {
     pub fn new_blank(rupt_tx: Producer<u8, 8>) -> AgcMemoryMap {
         AgcMemoryMap {
             #[cfg(feature = "std")]
             ram: ram::AgcRam::default(false),
             #[cfg(not(feature = "std"))]
             ram: ram::AgcRam::new(),
-            rom: rom::AgcRom::new(),
+            rom: rom::AgcRom::blank(),
             edit: edit::AgcEditRegs::new(),
             io: io::AgcIoSpace::new(),
             special: special::AgcSpecialRegs::new(rupt_tx),
@@ -60,10 +60,21 @@ impl AgcMemoryMap {
         }
     }
 
-    pub fn new(filename: &str, rupt_tx: Producer<u8, 8>) -> AgcMemoryMap {
-        let mut mm = AgcMemoryMap::new_blank(rupt_tx);
-        mm.rom.load_agcbin_file(filename);
-        mm
+    pub fn new(program: &'a [[u16; rom::ROM_BANK_NUM_WORDS]; rom::ROM_BANKS_NUM], rupt_tx: Producer<u8, 8>) -> AgcMemoryMap<'a> {
+        AgcMemoryMap {
+            #[cfg(feature = "std")]
+            ram: ram::AgcRam::default(false),
+            #[cfg(not(feature = "std"))]
+            ram: ram::AgcRam::new(),
+            rom: rom::AgcRom::new(program),
+            edit: edit::AgcEditRegs::new(),
+            io: io::AgcIoSpace::new(),
+            special: special::AgcSpecialRegs::new(rupt_tx),
+            timers: timer::AgcTimers::new(),
+            regs: regs::AgcRegs::new(),
+            superbank: false,
+            rom_debug: false,
+        }
     }
 
     #[allow(dead_code)]
@@ -242,6 +253,7 @@ impl AgcMemoryMap {
     }
 }
 
+/*
 #[cfg(test)]
 mod agc_memory_map_tests {
     use super::*;
@@ -531,3 +543,4 @@ mod agc_memory_map_tests {
         assert_eq!(0, mm.read_io(super::io::CHANNEL_LOSCALAR), "Mismatch");
     }
 }
+*/

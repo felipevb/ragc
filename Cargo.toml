@@ -1,6 +1,7 @@
 [workspace]
 
 members = [
+    "ragc-ropes",
     "ragc-core",
     "ragc"
 ]

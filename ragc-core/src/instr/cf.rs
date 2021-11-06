@@ -11,7 +11,7 @@ pub trait AgcControlFlow {
     fn tc(&mut self, inst: &AgcInst) -> u16;
 }
 
-impl AgcControlFlow for AgcCpu {
+impl <'a>AgcControlFlow for AgcCpu<'a> {
     fn bzf(&mut self, inst: &AgcInst) -> u16 {
         self.ec_flag = false;
 

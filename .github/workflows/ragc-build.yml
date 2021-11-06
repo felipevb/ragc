@@ -4,26 +4,38 @@ jobs:
   build-ragc-debug:
     runs-on: ubuntu-latest
     container:
-      image: rust:alpine
+      image: rust:buster
     steps:
+      - name: Install Additional Deps
+        run: apt update && apt install -y git git-lfs
       - name: Check out repository code
         uses: actions/checkout@v2
+        with:
+          lfs: true
+      - name: Check ROM files from checkout
+        run: ls -al ./ragc-ropes/res
       - name: Build Rust Project (Debug)
         run: cargo build
 
   run-ragc-tests:
     runs-on: ubuntu-latest
     container:
-      image: rust:alpine
+      image: rust:buster
     needs:
       build-ragc-debug
     strategy:
       matrix:
         test_name: [
-          "mem::timer", "mem::tests", "mem::ram",
+          "mem::timer", "mem::ram",
           "mem::rom", "mem::edit", "utils::"]
     steps:
+      - name: Install Additional Deps
+        run: apt update && apt install -y git git-lfs
       - name: Check out repository code
         uses: actions/checkout@v2
+        with:
+          lfs: true
+      - name: Check ROM files from checkout
+        run: ls -al ./ragc-ropes/res
       - name: Run Test ${{matrix.test_name}}
         run: cargo test ${{matrix.test_name}}

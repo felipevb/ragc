@@ -12,8 +12,6 @@ pub use io::AgcIo;
 pub use ldst::AgcLoadStore;
 pub use logic::AgcLogic;
 
-pub mod tests;
-
 const DATA_MASK: u16 = 0o7777; // 0xFFF
 const DATA_MASK_RAM: u16 = 0o1777; // 0x3FF
 const OPCODE_MASK: u16 = 0o7;
@@ -128,6 +126,9 @@ impl AgcInst {
         }
     }
 }
+
+#[cfg(test)]
+pub mod tests;
 
 #[cfg(test)]
 mod disasm_tests {
