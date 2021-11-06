@@ -8,10 +8,8 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v2
-        with:
-          lfs: true
       - name: Check ROM files from checkout
-        run: ls -al ./ragc-ropes/res
+        run: ls -al ./ragc-ropes/res && git --version
       - name: Build Rust Project (Debug)
         run: cargo build
 
