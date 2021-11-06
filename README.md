@@ -26,16 +26,24 @@ cargo build --release
 
 ## Running
 
-To run `ragc`, the emulator needs to know where it can load in the rope core
-binary that would be stored within a given AGC. Example binaries and methods to
-compile AGC4 code can be found at the VirtualAGC website, which information can
-be found in the [Resources](#Resources) section of this document.
+The `ragc` CLI provides the ability to run AGC ROM code via file or through
+prebuilt images provided by the `ragc-ropes` package. To run a prebuilt ROM
+image, the following command demonstrates how to run the RETREAD50 program
 
-Once an AGC rope core binary is obtained, running `ragc` is the same for running
-any Cargo application. The following command documents an example usage of this:
+```bash
+cargo run -- retread50
+```
+
+The subcommand `file` can be used to run an external AGC ROM via a file. Example
+binaries and ability to compile AGC4 code can be found at the VirtualAGC website.
+The link to the VirtualAGC site be found in the [Resources](#Resources) section
+of this document.
+
+Once an AGC rope core binary is obtained, the following command demonstrates how
+to run `ragc` with a custom ROM image:
 
 ```rust
-cargo run (binary path)
+cargo run -- file (binary path)
 ```
 
 Addtional flags and options can be used while running `ragc`.
@@ -47,7 +55,7 @@ Addtional flags and options can be used while running `ragc`.
   specify `RUST_LOG` environment variable with the level of logging desired.
   For example:
     ```rust
-    RUST_LOG=info cargo run --release (binary path)
+    RUST_LOG=info cargo run --release file (binary path)
     ```
 ## Supporting Peripherials
 
@@ -124,11 +132,6 @@ time. I hope to add more to this list over time as more resources are found.
 but is successful for RETREAD50.
  - Implement the IMU and inertial sensors in order to provide sensor data and emulate
 one of the programs within LUMINARY/COLOSSUS
- - Implement the various rebooting logic that goes with the AGC computer architecture
-   - Unprogrammed GOJAM implementation
-   - WATCHMEN implementation
-   - Too many TC instructions causes GOJAM
-   - Many others that I may or maynot know about
  - Reshape the codebase into a more library format. (i.e. - ragc-core, ragc-dsky, etc)
 to reduce the amount of std libraries needed for the ragc-core
  - Revisit the DOWNRUPT and implement the interface to allow for integration
