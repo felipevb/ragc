@@ -2,13 +2,16 @@ use crate::cpu;
 use crate::cpu::AgcCpu;
 use crate::mem;
 use heapless::spsc::Queue;
+use ragc_ropes;
 
 #[allow(dead_code)]
-pub fn init_agc() -> AgcCpu {
+pub fn init_agc<'a>() -> AgcCpu<'a> {
     let mut rupt_queue = Queue::new();
     let (rupt_tx, _rupt_rx) = rupt_queue.split();
 
-    let mut mm = mem::AgcMemoryMap::new_blank(rupt_tx);
+    let program = ragc_ropes::LUMINARY131_ROPE;
+
+    let mut mm = mem::AgcMemoryMap::new(program ,rupt_tx);
     mm.enable_rom_write();
     let mut _cpu = cpu::AgcCpu::new(mm);
 
