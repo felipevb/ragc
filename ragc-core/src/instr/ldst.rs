@@ -16,7 +16,7 @@ pub trait AgcLoadStore {
     fn ts(&mut self, inst: &AgcInst) -> u16;
 }
 
-impl AgcLoadStore for AgcCpu {
+impl <'a>AgcLoadStore for AgcCpu<'a> {
     fn cs(&mut self, inst: &AgcInst) -> u16 {
         let addr: usize = inst.get_data_bits() as usize;
         let mut val = self.read_s16(addr);

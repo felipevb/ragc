@@ -8,7 +8,7 @@ pub trait AgcInterrupt {
     fn resume(&mut self, inst: &AgcInst) -> u16;
 }
 
-impl AgcInterrupt for AgcCpu {
+impl <'a>AgcInterrupt for AgcCpu<'a> {
     fn inhint(&mut self, _inst: &AgcInst) -> u16 {
         self.gint = false;
         1

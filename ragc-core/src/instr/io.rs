@@ -14,7 +14,7 @@ pub trait AgcIo {
     fn rxor(&mut self, inst: &AgcInst) -> u16 ;
 }
 
-impl AgcIo for AgcCpu {
+impl <'a>AgcIo for AgcCpu<'a> {
     ///
     /// ## ROR instruction
     ///

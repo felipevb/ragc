@@ -6,7 +6,7 @@ pub trait AgcLogic {
     fn mask(&mut self, inst: &AgcInst) -> u16;
 }
 
-impl AgcLogic for AgcCpu {
+impl <'a>AgcLogic for AgcCpu<'a> {
     ///
     /// ## MASK instruction
     ///
