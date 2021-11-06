@@ -29,7 +29,13 @@ jobs:
           "mem::timer", "mem::tests", "mem::ram",
           "mem::rom", "mem::edit", "utils::"]
     steps:
+      - name: Install Additional Deps
+        run: apt update && apt install -y git git-lfs
       - name: Check out repository code
         uses: actions/checkout@v2
+        with:
+          lfs: true
+      - name: Check ROM files from checkout
+        run: ls -al ./ragc-ropes/res
       - name: Run Test ${{matrix.test_name}}
         run: cargo test ${{matrix.test_name}}
