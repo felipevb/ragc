@@ -26,7 +26,7 @@ jobs:
     strategy:
       matrix:
         test_name: [
-          "mem::timer", "mem::tests", "mem::ram",
+          "mem::timer", "mem::ram",
           "mem::rom", "mem::edit", "utils::"]
     steps:
       - name: Install Additional Deps
