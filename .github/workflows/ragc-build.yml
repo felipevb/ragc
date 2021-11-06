@@ -20,7 +20,7 @@ jobs:
   run-ragc-tests:
     runs-on: ubuntu-latest
     container:
-      image: rust:alpine
+      image: rust:buster
     needs:
       build-ragc-debug
     strategy:
