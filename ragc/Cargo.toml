@@ -14,3 +14,4 @@ env_logger = "0.8.4"
 crossbeam-channel = "0.5"
 ragc-core = { path = "../ragc-core" }
 ragc-ropes = { path = "../ragc-ropes" }
+ragc-vagc = { path = "../ragc-vagc" }
