@@ -1,6 +1,6 @@
 mod edit;
-mod io;
-mod periph;
+pub mod io;
+pub mod periph;
 mod ram;
 mod regs;
 mod rom;
