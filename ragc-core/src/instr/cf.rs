@@ -120,6 +120,7 @@ impl <'a>AgcControlFlow for AgcCpu<'a> {
     }
 }
 
+#[cfg(feature = "std")]
 #[cfg(test)]
 mod cfg_tests {
     use crate::cpu;

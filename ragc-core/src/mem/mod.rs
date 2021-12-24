@@ -5,8 +5,10 @@ mod ram;
 mod regs;
 mod rom;
 mod special;
-mod tests;
 mod timer;
+
+#[cfg(feature = "std")]
+mod tests;
 
 pub use io::AgcIoSpace;
 

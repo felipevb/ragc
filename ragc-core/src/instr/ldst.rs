@@ -158,6 +158,7 @@ impl <'a>AgcLoadStore for AgcCpu<'a> {
     }
 }
 
+#[cfg(feature = "std")]
 #[cfg(test)]
 mod ldst_tests {
     use crate::cpu;

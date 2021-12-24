@@ -767,6 +767,7 @@ impl <'a>AgcCpu<'a> {
     }
 }
 
+#[cfg(feature = "std")]
 #[cfg(test)]
 mod cpu_tests {
     use crate::cpu;
@@ -895,7 +896,6 @@ mod cpu_tests {
     #[test]
     fn cpu_test_tc_trap_reset_light() {
         let mut cpu = init_agc();
-
         let dur = std::time::Duration::from_secs(5);
         std::thread::sleep(dur);
         println!("Restarting AGC. Should indicate a RESTART light");

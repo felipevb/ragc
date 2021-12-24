@@ -23,13 +23,6 @@ pub fn validate_cpu_state(cpu: &mut AgcCpu, expect_pc: u16) {
     assert_eq!(cpu.read(cpu::REG_Z), expect_pc);
 }
 
-mod init_tests {
-    #[test]
-    fn helloworld() {
-        env_logger::init();
-    }
-}
-
 mod ad;
 mod arith;
 mod logic;
