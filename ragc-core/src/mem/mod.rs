@@ -1,18 +1,22 @@
 mod edit;
-mod io;
-mod periph;
+pub mod io;
+pub mod periph;
 mod ram;
 mod regs;
 mod rom;
 mod special;
-mod tests;
 mod timer;
+
+#[cfg(feature = "std")]
+mod tests;
 
 pub use io::AgcIoSpace;
 
 use heapless::spsc::Producer;
 
 use log::{error, trace};
+
+use self::periph::AgcIoPeriph;
 
 const _AGC_MM_RAMSIZE: usize = 1024;
 const _AGC_MM_ROMSIZE: usize = 3072;
@@ -33,7 +37,7 @@ trait AgcMemType {
 pub struct AgcMemoryMap<'a> {
     ram: ram::AgcRam,
     rom: rom::AgcRom<'a>,
-    io: io::AgcIoSpace,
+    io: io::AgcIoSpace<'a>,
     edit: edit::AgcEditRegs,
     special: special::AgcSpecialRegs,
     timers: timer::AgcTimers,
@@ -50,8 +54,8 @@ impl<'a> AgcMemoryMap<'a> {
             #[cfg(not(feature = "std"))]
             ram: ram::AgcRam::new(),
             rom: rom::AgcRom::blank(),
+            io: io::AgcIoSpace::blank(),
             edit: edit::AgcEditRegs::new(),
-            io: io::AgcIoSpace::new(),
             special: special::AgcSpecialRegs::new(rupt_tx),
             timers: timer::AgcTimers::new(),
             regs: regs::AgcRegs::new(),
@@ -60,7 +64,10 @@ impl<'a> AgcMemoryMap<'a> {
         }
     }
 
-    pub fn new(program: &'a [[u16; rom::ROM_BANK_NUM_WORDS]; rom::ROM_BANKS_NUM], rupt_tx: Producer<u8, 8>) -> AgcMemoryMap<'a> {
+    pub fn new(program: &'a [[u16; rom::ROM_BANK_NUM_WORDS]; rom::ROM_BANKS_NUM],
+               downrupt: &'a mut dyn AgcIoPeriph,
+               dsky: &'a mut dyn AgcIoPeriph,
+               rupt_tx: Producer<u8, 8>) -> AgcMemoryMap<'a> {
         AgcMemoryMap {
             #[cfg(feature = "std")]
             ram: ram::AgcRam::default(false),
@@ -68,7 +75,7 @@ impl<'a> AgcMemoryMap<'a> {
             ram: ram::AgcRam::new(),
             rom: rom::AgcRom::new(program),
             edit: edit::AgcEditRegs::new(),
-            io: io::AgcIoSpace::new(),
+            io: io::AgcIoSpace::new(downrupt, dsky),
             special: special::AgcSpecialRegs::new(rupt_tx),
             timers: timer::AgcTimers::new(),
             regs: regs::AgcRegs::new(),

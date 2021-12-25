@@ -7,6 +7,7 @@ use log::error;
 
 use ragc_core::{cpu, mem};
 use ragc_ropes;
+use ragc_vagc;
 
 pub const ROM_BANKS_NUM: usize = 36;
 pub const ROM_BANK_NUM_WORDS: usize = 1024;
@@ -128,7 +129,10 @@ fn main() {
     let mut q1 = heapless::spsc::Queue::new();
     let (rupt_tx, _rupt_rx) = q1.split();
 
-    let mm = mem::AgcMemoryMap::new(&rope, rupt_tx);
+    let mut dsky = ragc_vagc::dsky::DskyDisplay::new();
+    let mut downrupt = ragc_vagc::downrupt::DownruptPeriph::new();
+
+    let mm = mem::AgcMemoryMap::new(&rope, &mut downrupt, &mut dsky, rupt_tx);
     let mut _cpu = cpu::AgcCpu::new(mm);
 
     _cpu.reset();

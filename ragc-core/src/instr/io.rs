@@ -247,6 +247,7 @@ impl <'a>AgcIo for AgcCpu<'a> {
     }
 }
 
+#[cfg(feature = "std")]
 #[cfg(test)]
 mod io_tests {
     use crate::cpu;

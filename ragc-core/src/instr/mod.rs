@@ -127,9 +127,11 @@ impl AgcInst {
     }
 }
 
+#[cfg(feature = "std")]
 #[cfg(test)]
 pub mod tests;
 
+#[cfg(feature = "std")]
 #[cfg(test)]
 mod disasm_tests {
     use super::AgcInst;

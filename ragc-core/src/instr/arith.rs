@@ -58,6 +58,7 @@ fn convert_to_dp(upper: u16, lower: u16) -> u32 {
     }
 }
 
+#[cfg(feature = "std")]
 #[cfg(test)]
 mod convert_test {
     #[test]

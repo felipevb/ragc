@@ -1,6 +1,7 @@
 use log::{info, warn};
 
 use crate::mem::AgcMemType;
+use crate::utils::Option as Option;
 
 #[allow(dead_code)]
 const DATA_LINE_NUM_PARTS: usize = 8;
@@ -9,17 +10,9 @@ const DATA_LINE_PART_LEN: usize = 6;
 pub const ROM_BANKS_NUM: usize = 36;
 pub const ROM_BANK_NUM_WORDS: usize = 1024;
 
-
-enum Option<T> {
-    None,
-    Some(T)
-}
-
 pub struct AgcRom<'a> {
     program: Option<&'a [[u16; ROM_BANK_NUM_WORDS]; ROM_BANKS_NUM]>
 }
-
-
 
 // ============================================================================
 // Trait Implementations

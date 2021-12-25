@@ -3,5 +3,6 @@
 members = [
     "ragc-ropes",
     "ragc-core",
-    "ragc"
+    "ragc",
+    "ragc-vagc"
 ]

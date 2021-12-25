@@ -1,7 +1,6 @@
-use super::periph::downrupt::DownruptPeriph;
-use super::periph::dsky::DskyDisplay;
 use super::periph::engines::LmEngines;
-use super::periph::Peripheral;
+use super::periph::AgcIoPeriph;
+use crate::{utils::Option as Option};
 
 use log::{debug, error, warn};
 
@@ -28,20 +27,38 @@ pub const CHANNEL_CHAN33: usize = 0o33;
 pub const CHANNEL_CHAN34: usize = 0o34; // DOWNLIST WORD1
 pub const CHANNEL_CHAN35: usize = 0o35; // DOWNLIST WORD2
 
-pub struct AgcIoSpace {
+pub struct AgcIoSpace<'a> {
     io_mem: [u16; 256],
-    downrupt: DownruptPeriph,
-    dsky: DskyDisplay,
+    downrupt: Option<&'a mut dyn AgcIoPeriph>,
+    dsky: Option<&'a mut dyn AgcIoPeriph>,
     lm_engines: LmEngines,
 }
 
-impl AgcIoSpace {
-    //pub fn new(parent: crate::mem::AgcMemoryMap) -> Self {
-    pub fn new() -> Self {
+impl<'a> AgcIoSpace<'a> {
+    pub fn new(downrupt: &'a mut dyn AgcIoPeriph,
+               dsky: &'a mut dyn AgcIoPeriph) -> Self
+    {
         let mut s = Self {
             io_mem: [0; 256],
-            downrupt: DownruptPeriph::new(),
-            dsky: DskyDisplay::new(),
+            downrupt: Option::Some(downrupt),
+            dsky: Option::Some(dsky),
+            lm_engines: LmEngines::new(),
+        };
+
+        // Mark the engine as off to start off with
+        //s.io_mem[CHANNEL_DSALMOUT] = 0x0000;
+        s.io_mem[0o30] = 0o37777;
+        s.io_mem[0o31] = 0o77777;
+        s.io_mem[0o32] = 0o77777;
+        s.io_mem[0o33] = 0o77777;
+        s
+    }
+
+    pub fn blank() -> Self {
+        let mut s = Self {
+            io_mem: [0; 256],
+            downrupt: Option::None,
+            dsky: Option::None,
             lm_engines: LmEngines::new(),
         };
 
@@ -201,8 +218,14 @@ impl AgcIoSpace {
 
             // # CHANNEL 15    MNKEYIN; INPUT CHANNEL;KEY CODE INPUT FROM KEYBOARD OF DSKY, SENSED BY PROGRAM WHEN
             // #               PROGRAM INTERRUPT #5 IS RECEIVED. USES BITS 5-1
-            CHANNEL_MNKEYIN => self.dsky.read_keypress(),
-
+            CHANNEL_MNKEYIN => {
+                match &self.dsky {
+                    Option::Some(x) => {
+                        x.read(channel_idx)
+                    },
+                    Option::None => { 0o00000 }
+                }
+            },
             // # CHANNEL 16    NAVKEYIN; INPUT CHANNEL; OPTICS MARK INFORMATION AND NAVIGA ION PANEL DSKY (CM) OR THRUST
             // #               CONTROL (LM) SENSED BY PROGRAM WHEN PROGRAM INTER-RUPT #6 IS RECEIVED. USES BITS 3-7 ONLY.
             //
@@ -275,18 +298,14 @@ impl AgcIoSpace {
             // #               BIT 10             APPARENT DESCENT ENGINE GIMBAL FAILURE
             // #               BIT 14             INDICATES PROCEED KEY IS DEPRESSED
             CHANNEL_CHAN32 => {
-                let val = self.dsky.read_proceed_flag();
+                let val = match &self.dsky {
+                    Option::Some(x) => {
+                        x.read(channel_idx)
+                    },
+                    Option::None => { 0o77777 }
+                };
                 //println!("CHAN32: {:5o}", val);
                 val | (self.io_mem[0o32] & 0o57777)
-                //if self.counter < 2 {
-                //    self.counter += 1;
-                //    0o77777
-                //} else if self.counter < 4 {
-                //    self.counter += 1;
-                //    0o57777
-                //} else {
-                //    0o77777
-                //}
             }
 
             // # CHANNEL 33    CHAN33; INPUT CHANNEL; FOR HARDWARE STATUS AND COMMAND INFORMATION. BITS 15-11 ARE FLIP-
@@ -312,9 +331,22 @@ impl AgcIoSpace {
 
             // # CHANNEL 34    DNT M1; OUTPUT CHANNEL; DOWNLINK 1  FIRST OF TWO WORDS SERIALIZATION.
             // # CHANNEL 35    DNT M2; OUTPUT CHANNEL DOWNLINK 2 SOCOND OF TWO   WORDS SERIALIZATION.
-            CHANNEL_CHAN34 => self.downrupt.read(channel_idx),
-            CHANNEL_CHAN35 => self.downrupt.read(channel_idx),
-            0o163 => self.dsky.get_channel_value(channel_idx),
+            CHANNEL_CHAN34 | CHANNEL_CHAN35 => {
+                match &self.downrupt {
+                    Option::Some(x) => {
+                        x.read(channel_idx)
+                    },
+                    Option::None => { 0o77777 }
+                }
+            },
+            0o163 => {
+                match &self.dsky {
+                    Option::Some(x) => {
+                        x.read(channel_idx)
+                    },
+                    Option::None => { 0o77777 }
+                }
+            },
             _ => {
                 error!("Unknown IO Channel: {:o}", channel_idx);
                 self.io_mem[channel_idx]
@@ -324,34 +356,35 @@ impl AgcIoSpace {
 
     pub fn write(&mut self, channel_idx: usize, val: u16) {
         debug!("IO Space Write: {:x} {:x}", channel_idx, val);
-        match channel_idx {
-            CHANNEL_DSKY => {
-                self.dsky.set_channel_dsky_value(val);
+
+        // Handle the case of the DSKY Object and perform a write,
+        // if needed
+        match &mut self.dsky {
+            Option::Some(x) => {
+                x.write(channel_idx, val);
             }
+            _ => {}
+        }
+
+        // Handle the case of the downrupt Object and perform a write,
+        // if needed
+        match &mut self.downrupt {
+            Option::Some(x) => {
+                x.write(channel_idx, val);
+            }
+            _ => {}
+        }
+
+        match channel_idx {
             CHANNEL_DSALMOUT => {
-                self.dsky.set_dsalmout_flags(val);
                 self.io_mem[CHANNEL_DSALMOUT] = val; //val & 0x33FF;
             }
             CHANNEL_SUPERBNK => self.io_mem[channel_idx] = val & 0o00160,
             CHANNEL_CHAN13 => {
-                self.dsky.set_channel_value(CHANNEL_CHAN13, val);
-                self.downrupt.write(CHANNEL_CHAN13, val);
                 self.io_mem[CHANNEL_CHAN13] = val;
             }
             CHANNEL_CHAN32 => {
                 warn!("Attempting to write to IO CHAN32 which is only an input");
-            }
-
-            CHANNEL_CHAN34 => {
-                //info!("DOWNRUPTA: {:o}", val & 0x7FFF);
-                self.downrupt.write(channel_idx, val & 0o77777);
-            }
-            CHANNEL_CHAN35 => {
-                //info!("DOWNRUPTB: {:o}", val & 0x7FFF);
-                self.downrupt.write(channel_idx, val & 0o77777);
-            }
-            0o163 => {
-                self.dsky.set_channel_value(channel_idx, val);
             }
             _ => {
                 self.io_mem[channel_idx] = val;
@@ -360,6 +393,22 @@ impl AgcIoSpace {
     }
 
     pub fn check_interrupt(&mut self) -> u16 {
-        self.dsky.is_interrupt()
+        let mut val = 0;
+
+        val |= match &mut self.dsky {
+            Option::Some(x) => {
+                x.is_interrupt()
+            }
+            Option::None => { 0o00000 },
+        };
+
+        val |= match &mut self.downrupt {
+            Option::Some(x) => {
+                x.is_interrupt()
+            }
+            Option::None => { 0o00000 },
+        };
+
+        val
     }
 }

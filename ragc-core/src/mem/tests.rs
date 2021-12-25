@@ -1,3 +1,4 @@
+#[cfg(feature = "std")]
 #[cfg(test)]
 mod scalar_tests {
     use crate::cpu;

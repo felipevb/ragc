@@ -23,6 +23,7 @@ impl AgcRam {
     pub fn new() -> AgcRam {
         AgcRam {
             banks: [[0; RAM_BANK_SIZE]; RAM_NUM_BANKS],
+            #[cfg(feature = "std")]
             enable_savestate: false,
         }
     }
