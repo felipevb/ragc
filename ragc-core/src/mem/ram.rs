@@ -1,16 +1,11 @@
 use crate::cpu;
 use crate::mem::AgcMemType;
+use crate::consts;
 use log::trace;
-
-/* Number of Banks within a given AGC computer */
-pub const RAM_NUM_BANKS: usize = 8;
-
-/* Number of Words within a given RAM Bank */
-const RAM_BANK_SIZE: usize = 256;
 
 #[derive(Clone)]
 pub struct AgcRam {
-    banks: [[u16; RAM_BANK_SIZE]; RAM_NUM_BANKS],
+    banks: [[u16; consts::RAM_BANK_NUM_WORDS]; consts::RAM_NUM_BANKS],
     #[cfg(feature = "std")]
     enable_savestate: bool,
 }
@@ -22,7 +17,7 @@ impl AgcRam {
     ///
     pub fn new() -> AgcRam {
         AgcRam {
-            banks: [[0; RAM_BANK_SIZE]; RAM_NUM_BANKS],
+            banks: [[0; consts::RAM_BANK_NUM_WORDS]; consts::RAM_NUM_BANKS],
             #[cfg(feature = "std")]
             enable_savestate: false,
         }
@@ -35,7 +30,7 @@ impl AgcRam {
     ///
     #[allow(dead_code)]
     pub fn reset(&mut self) {
-        self.banks = [[0; RAM_BANK_SIZE]; RAM_NUM_BANKS];
+        self.banks = [[0; consts::RAM_BANK_NUM_WORDS]; consts::RAM_NUM_BANKS];
     }
 }
 
@@ -159,6 +154,7 @@ mod ramstd {
 #[cfg(test)]
 mod agc_ram_tests {
     use super::*;
+    use crate::consts;
 
     #[test]
     fn reset_test() {
@@ -166,16 +162,16 @@ mod agc_ram_tests {
 
         // Load with Random Value to ensure reset will do what it should be
         // doing.
-        for i in 0..RAM_NUM_BANKS {
-            for j in 0..RAM_BANK_SIZE {
+        for i in 0..consts::RAM_NUM_BANKS {
+            for j in 0..consts::RAM_BANK_NUM_WORDS {
                 ram.banks[i][j] = 0xAA55;
             }
         }
 
         // Reset
         ram.reset();
-        for i in 0..RAM_NUM_BANKS {
-            for j in 0..RAM_BANK_SIZE {
+        for i in 0..consts::RAM_NUM_BANKS {
+            for j in 0..consts::RAM_BANK_NUM_WORDS {
                 assert_eq!(0, ram.banks[i][j]);
             }
         }
@@ -185,8 +181,8 @@ mod agc_ram_tests {
     fn test_read_s15_locations() {
         let mut ram = AgcRam::new();
 
-        for i in 0..RAM_NUM_BANKS {
-            for j in 0..RAM_BANK_SIZE {
+        for i in 0..consts::RAM_NUM_BANKS {
+            for j in 0..consts::RAM_BANK_NUM_WORDS {
                 ram.reset();
                 ram.banks[i][j] = 0x55AA;
                 assert_eq!(
@@ -219,8 +215,8 @@ mod agc_ram_tests {
         }
 
         // Test 15-Bit
-        for i in 0..RAM_NUM_BANKS {
-            for j in 0..RAM_BANK_SIZE {
+        for i in 0..consts::RAM_NUM_BANKS {
+            for j in 0..consts::RAM_BANK_NUM_WORDS {
                 if i == 0 && regs_16bit.contains(&j) {
                     continue;
                 }
@@ -242,8 +238,8 @@ mod agc_ram_tests {
     fn test_write_s15_locations() {
         let mut ram = AgcRam::new();
 
-        for i in 0..RAM_NUM_BANKS {
-            for j in 0..RAM_BANK_SIZE {
+        for i in 0..consts::RAM_NUM_BANKS {
+            for j in 0..consts::RAM_BANK_NUM_WORDS {
                 ram.reset();
                 ram.write(i, j, 0x55AA);
                 assert_eq!(

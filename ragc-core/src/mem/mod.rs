@@ -17,6 +17,7 @@ use heapless::spsc::Producer;
 use log::{error, trace};
 
 use self::periph::AgcIoPeriph;
+use crate::consts;
 
 const _AGC_MM_RAMSIZE: usize = 1024;
 const _AGC_MM_ROMSIZE: usize = 3072;
@@ -64,7 +65,7 @@ impl<'a> AgcMemoryMap<'a> {
         }
     }
 
-    pub fn new(program: &'a [[u16; rom::ROM_BANK_NUM_WORDS]; rom::ROM_BANKS_NUM],
+    pub fn new(program: &'a [[u16; consts::ROM_BANK_NUM_WORDS]; consts::ROM_NUM_BANKS],
                downrupt: &'a mut dyn AgcIoPeriph,
                dsky: &'a mut dyn AgcIoPeriph,
                rupt_tx: Producer<u8, 8>) -> AgcMemoryMap<'a> {

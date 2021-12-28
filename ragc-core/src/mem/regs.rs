@@ -106,6 +106,7 @@ impl AgcMemType for AgcRegs {
 mod regs_unittests {
     use super::AgcMemType;
     use super::AgcRegs;
+    use crate::consts;
 
     #[test]
     ///
@@ -184,9 +185,9 @@ mod regs_unittests {
     fn test_bb_register() {
         let mut regs = AgcRegs::new();
 
-        for ram_idx in 0..crate::mem::ram::RAM_NUM_BANKS {
+        for ram_idx in 0..consts::RAM_NUM_BANKS {
             let test_eb_value = (0o7 & ram_idx) << 8;
-            for rom_idx in 0..crate::mem::rom::ROM_BANKS_NUM {
+            for rom_idx in 0..consts::ROM_NUM_BANKS {
                 let test_fb_value = ((0o37) & rom_idx) << 10;
                 let test_bb_value = test_fb_value | (ram_idx & 0o7);
 
@@ -211,7 +212,7 @@ mod regs_unittests {
 
         regs.write(0, crate::cpu::REG_FB, 0o00000);
 
-        for ram_idx in 0..crate::mem::ram::RAM_NUM_BANKS {
+        for ram_idx in 0..consts::RAM_NUM_BANKS {
             let test_eb_value = (0o7 & ram_idx) << 8;
             let test_bb_value = ram_idx & 0o7;
 
@@ -234,7 +235,7 @@ mod regs_unittests {
 
         regs.write(0, crate::cpu::REG_FB, 0o00000);
 
-        for rom_idx in 0..crate::mem::rom::ROM_BANKS_NUM {
+        for rom_idx in 0..consts::ROM_NUM_BANKS {
             let test_fb_value = ((0o37) & rom_idx) << 10;
             let test_bb_value = test_fb_value;
 
