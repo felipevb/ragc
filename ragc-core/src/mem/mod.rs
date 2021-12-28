@@ -19,14 +19,7 @@ use log::{error, trace};
 use self::periph::AgcIoPeriph;
 
 use crate::consts;
-
-const _AGC_MM_RAMSIZE: usize = 1024;
-const _AGC_MM_ROMSIZE: usize = 3072;
-
-const AGC_MM_RAM_START: usize = 0o61;
-const AGC_MM_RAM_END: usize = 1023;
-const AGC_MM_ROM_START: usize = 1024;
-const AGC_MM_ROM_END: usize = 4096;
+use crate::consts::memmap;
 
 // ============================================================================
 // Trait Declarations
@@ -180,14 +173,14 @@ impl<'a> AgcMemoryMap<'a> {
             0o32..=0o60 => {
                 self.special.write(0, idx, val);
             }
-            AGC_MM_RAM_START..=AGC_MM_RAM_END => {
+            memmap::AGC_MM_ERASABLE_START..=memmap::AGC_MM_ERASABLE_END => {
                 if (idx >> 8) == 3 {
                     self.ram.write(self.regs.ebank, (idx & 0xff) as usize, val)
                 } else {
                     self.ram.write(idx >> 8, (idx & 0xff) as usize, val)
                 }
             }
-            AGC_MM_ROM_START..=AGC_MM_ROM_END => {
+            memmap::AGC_MM_FIXED_START..=memmap::AGC_MM_FIXED_END => {
                 if self.rom_debug == false {
                     error!("Writing to ROM location: {:x}", idx);
                     return;
@@ -212,14 +205,14 @@ impl<'a> AgcMemoryMap<'a> {
             0o20..=0o23 => self.edit.read(0, idx),
             0o24..=0o31 => self.timers.read(0, idx),
             0o32..=0o60 => self.special.read(0, idx),
-            AGC_MM_RAM_START..=AGC_MM_RAM_END => {
+            memmap::AGC_MM_ERASABLE_START..=memmap::AGC_MM_ERASABLE_END => {
                 if (idx >> 8) == 3 {
                     self.ram.read(self.regs.ebank, (idx & 0xff) as usize)
                 } else {
                     self.ram.read(idx >> 8, (idx & 0xff) as usize)
                 }
             }
-            AGC_MM_ROM_START..=AGC_MM_ROM_END => {
+            memmap::AGC_MM_FIXED_START..=memmap::AGC_MM_FIXED_END => {
                 if (idx >> 10) == 1 {
                     trace!("Reading from Windowed ROM: {:x} {:x}", self.regs.fbank, idx);
                     match self.regs.fbank {

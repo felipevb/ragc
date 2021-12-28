@@ -12,6 +12,19 @@ pub const ROM_NUM_BANKS: usize = 36;
 /* Number of words within a given FIXED memory bank */
 pub const ROM_BANK_NUM_WORDS: usize = 1024;
 
+/* Constants to define the memory map addresses */
+pub mod memmap {
+    // 3072 words of ERASABLE assessable memory
+    pub const AGC_MM_ERASABLE_SIZE: usize = 0x400;
+    // 3072 words of FIXED assessable memory
+    pub const AGC_MM_FIXED_SIZE: usize = 0xC00;
+
+
+    pub const AGC_MM_ERASABLE_START: usize = 0o61;
+    pub const AGC_MM_ERASABLE_END: usize = AGC_MM_ERASABLE_SIZE - 1;
+    pub const AGC_MM_FIXED_START: usize = AGC_MM_ERASABLE_SIZE;
+    pub const AGC_MM_FIXED_END: usize = AGC_MM_FIXED_START + AGC_MM_FIXED_SIZE - 1;
+}
 
 pub mod io {
     pub const CHANNEL_L: usize = 0o01;
