@@ -1,4 +1,3 @@
-use crate::cpu;
 use crate::mem::AgcMemType;
 use crate::consts;
 use log::trace;

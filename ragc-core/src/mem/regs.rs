@@ -1,7 +1,5 @@
-use crate::{cpu, consts};
+use crate::consts;
 use crate::mem::AgcMemType;
-
-
 use log::debug;
 
 #[derive(Clone)]

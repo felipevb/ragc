@@ -1,4 +1,3 @@
-use crate::cpu;
 use crate::cpu::AgcUnprogSeq;
 use crate::mem::AgcMemType;
 use crate::consts;
