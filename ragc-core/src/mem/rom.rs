@@ -1,17 +1,16 @@
 use log::{info, warn};
 
 use crate::mem::AgcMemType;
+use crate::consts;
 use crate::utils::Option as Option;
 
 #[allow(dead_code)]
 const DATA_LINE_NUM_PARTS: usize = 8;
 #[allow(dead_code)]
 const DATA_LINE_PART_LEN: usize = 6;
-pub const ROM_BANKS_NUM: usize = 36;
-pub const ROM_BANK_NUM_WORDS: usize = 1024;
 
 pub struct AgcRom<'a> {
-    program: Option<&'a [[u16; ROM_BANK_NUM_WORDS]; ROM_BANKS_NUM]>
+    program: Option<&'a [[u16; consts::ROM_BANK_NUM_WORDS]; consts::ROM_NUM_BANKS]>
 }
 
 // ============================================================================
@@ -19,7 +18,7 @@ pub struct AgcRom<'a> {
 // ============================================================================
 impl <'a>AgcMemType for AgcRom<'a> {
     fn read(&self, bank_idx: usize, bank_offset: usize) -> u16 {
-        if bank_idx >= ROM_BANKS_NUM || bank_offset >= ROM_BANK_NUM_WORDS {
+        if bank_idx >= consts::ROM_NUM_BANKS || bank_offset >= consts::ROM_BANK_NUM_WORDS {
             warn!(
                 "Out of bound indexing into AgcRom {} {}",
                 bank_idx, bank_offset
@@ -45,7 +44,7 @@ impl <'a>AgcMemType for AgcRom<'a> {
     }
 
     fn write(&mut self, bank_idx: usize, bank_offset: usize, value: u16) {
-        if bank_idx >= ROM_BANKS_NUM || bank_offset >= ROM_BANK_NUM_WORDS {
+        if bank_idx >= consts::ROM_NUM_BANKS || bank_offset >= consts::ROM_BANK_NUM_WORDS {
             warn!(
                 "Out of bound indexing into AgcRom {} {}",
                 bank_idx, bank_offset
@@ -58,7 +57,7 @@ impl <'a>AgcMemType for AgcRom<'a> {
 }
 
 impl <'a>AgcRom<'a> {
-    pub fn new(program: &'a [[u16; ROM_BANK_NUM_WORDS]; ROM_BANKS_NUM]) -> AgcRom {
+    pub fn new(program: &'a [[u16; consts::ROM_BANK_NUM_WORDS]; consts::ROM_NUM_BANKS]) -> AgcRom {
         AgcRom {
             program: Option::Some(program),
         }

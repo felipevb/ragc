@@ -1,5 +1,6 @@
 use super::AgcInst;
-use crate::cpu::*;
+use crate::cpu::AgcCpu;
+use crate::consts::cpu::*;
 use crate::utils;
 
 use log::debug;

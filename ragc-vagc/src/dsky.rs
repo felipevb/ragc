@@ -381,15 +381,15 @@ impl DskyDisplay {
 impl ragc_core::mem::periph::AgcIoPeriph for DskyDisplay {
     fn read(&self, channel_idx: usize) -> u16 {
         match channel_idx {
-            ragc_core::mem::io::CHANNEL_MNKEYIN => {
+            ragc_core::consts::io::CHANNEL_MNKEYIN => {
                 self.read_keypress()
             }
-            ragc_core::mem::io::CHANNEL_CHAN30 => 0o77777,
-            ragc_core::mem::io::CHANNEL_CHAN31 => 0o77777,
-            ragc_core::mem::io::CHANNEL_CHAN32 => {
+            ragc_core::consts::io::CHANNEL_CHAN30 => 0o77777,
+            ragc_core::consts::io::CHANNEL_CHAN31 => 0o77777,
+            ragc_core::consts::io::CHANNEL_CHAN32 => {
                 self.read_proceed_flag()
             }
-            ragc_core::mem::io::CHANNEL_CHAN33 => 0o77777,
+            ragc_core::consts::io::CHANNEL_CHAN33 => 0o77777,
             0o163 => self.get_channel_value(channel_idx),
             _ => { 0o00000 }
         }
@@ -397,13 +397,13 @@ impl ragc_core::mem::periph::AgcIoPeriph for DskyDisplay {
 
     fn write(&mut self, channel_idx: usize, value: u16) {
         match channel_idx {
-            ragc_core::mem::io::CHANNEL_DSKY => {
+            ragc_core::consts::io::CHANNEL_DSKY => {
                 self.set_channel_dsky_value(value);
             },
-            ragc_core::mem::io::CHANNEL_DSALMOUT => {
+            ragc_core::consts::io::CHANNEL_DSALMOUT => {
                 self.set_dsalmout_flags(value);
             }
-            ragc_core::mem::io::CHANNEL_CHAN13 => {
+            ragc_core::consts::io::CHANNEL_CHAN13 => {
                 self.set_channel_value(channel_idx, value);
             }
             0o163 => {
@@ -429,7 +429,7 @@ impl ragc_core::mem::periph::AgcIoPeriph for DskyDisplay {
                     }
                 }
             }
-            (1 << ragc_core::cpu::RUPT_KEY1) as u16
+            (1 << ragc_core::consts::cpu::RUPT_KEY1) as u16
         } else {
             0
         }

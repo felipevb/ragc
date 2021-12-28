@@ -65,7 +65,7 @@ impl AgcIoPeriph for DownruptPeriph {
     ///
     fn read(&self, channel_idx: usize) -> u16 {
         match channel_idx {
-            ragc_core::mem::io::CHANNEL_CHAN13 => {
+            ragc_core::consts::io::CHANNEL_CHAN13 => {
                 if self.word_order {
                     1 << 6
                 }
@@ -73,12 +73,12 @@ impl AgcIoPeriph for DownruptPeriph {
                     0o00000
                 }
             }
-            ragc_core::mem::io::CHANNEL_CHAN30 |
-            ragc_core::mem::io::CHANNEL_CHAN31 |
-            ragc_core::mem::io::CHANNEL_CHAN32 |
-            ragc_core::mem::io::CHANNEL_CHAN33 |
-            ragc_core::mem::io::CHANNEL_CHAN34 |
-            ragc_core::mem::io::CHANNEL_CHAN35 => { 0o77777 }
+            ragc_core::consts::io::CHANNEL_CHAN30 |
+            ragc_core::consts::io::CHANNEL_CHAN31 |
+            ragc_core::consts::io::CHANNEL_CHAN32 |
+            ragc_core::consts::io::CHANNEL_CHAN33 |
+            ragc_core::consts::io::CHANNEL_CHAN34 |
+            ragc_core::consts::io::CHANNEL_CHAN35 => { 0o77777 }
             _ => { 0o00000 }
         }
     }
@@ -93,7 +93,7 @@ impl AgcIoPeriph for DownruptPeriph {
     ///
     fn write(&mut self, channel_idx: usize, value: u16) {
         match channel_idx {
-            ragc_core::mem::io::CHANNEL_CHAN13 => {
+            ragc_core::consts::io::CHANNEL_CHAN13 => {
                 if value & (1 << 6) != 0o00000 {
                     self.word_order = true;
                 }
@@ -101,11 +101,11 @@ impl AgcIoPeriph for DownruptPeriph {
                     self.word_order = false;
                 }
             },
-            ragc_core::mem::io::CHANNEL_CHAN34 => {
+            ragc_core::consts::io::CHANNEL_CHAN34 => {
                 let packet = generate_yaagc_packet(channel_idx, value);
                 self.tx.send(packet).unwrap();
             }
-            ragc_core::mem::io::CHANNEL_CHAN35 => {
+            ragc_core::consts::io::CHANNEL_CHAN35 => {
                 let packet = generate_yaagc_packet(channel_idx, value);
                 self.tx.send(packet).unwrap();
             }

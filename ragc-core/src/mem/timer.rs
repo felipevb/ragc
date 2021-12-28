@@ -1,6 +1,6 @@
-use crate::cpu;
 use crate::cpu::AgcUnprogSeq;
 use crate::mem::AgcMemType;
+use crate::consts;
 
 use heapless::Deque;
 
@@ -35,13 +35,6 @@ pub enum TimerType {
     TIME5,
     TIME6,
 }
-
-pub const MM_TIME2: usize = 0o24;
-pub const MM_TIME1: usize = 0o25;
-pub const MM_TIME3: usize = 0o26;
-pub const MM_TIME4: usize = 0o27;
-pub const MM_TIME5: usize = 0o30;
-pub const MM_TIME6: usize = 0o31;
 
 fn push_unprog_seq(unprog: &mut Deque<AgcUnprogSeq, 8>, seq: AgcUnprogSeq) {
     match unprog.push_back(seq) {
@@ -147,7 +140,7 @@ impl AgcTimers {
                     // If we are hitting the case where we got to zero, disable
                     // the timer and send the interrupt mask.
                     self.time6_enable = false;
-                    interrupt_mask |= 1 << cpu::RUPT_TIME6;
+                    interrupt_mask |= 1 << consts::cpu::RUPT_TIME6;
                 } else {
                     // Otherwise, we do an ABS value decrement of TIME6 register.
                     // Per the documentation.
@@ -198,7 +191,7 @@ impl AgcTimers {
         self.timer4 = (self.timer4 + 1) & 0o77777;
         if self.timer4 == 0o40000 {
             self.timer4 = 0;
-            return 1 << cpu::RUPT_TIME4;
+            return 1 << consts::cpu::RUPT_TIME4;
         }
 
         0
@@ -208,7 +201,7 @@ impl AgcTimers {
         self.timer5 = (self.timer5 + 1) & 0o77777;
         if self.timer5 == 0o40000 {
             self.timer5 = 0;
-            return 1 << cpu::RUPT_TIME5;
+            return 1 << consts::cpu::RUPT_TIME5;
         }
 
         0
@@ -248,7 +241,7 @@ impl AgcTimers {
     pub fn handle_downrupt(&mut self) -> u16 {
         //self.dnrupt_counter += 1;
         //if self.dnrupt_counter % 2 == 0 {
-        return 1 << cpu::RUPT_DOWNRUPT;
+        return 1 << consts::cpu::RUPT_DOWNRUPT;
         //}
         //0
     }
@@ -264,7 +257,7 @@ impl AgcTimers {
         if self.timer3 == 0o40000 {
             self.timer3 = 0;
             debug!("New TIMER3 interrupt!");
-            return 1 << cpu::RUPT_TIME3;
+            return 1 << consts::cpu::RUPT_TIME3;
         }
 
         0
@@ -339,12 +332,12 @@ impl AgcTimers {
 impl AgcMemType for AgcTimers {
     fn read(&self, _bank_idx: usize, bank_offset: usize) -> u16 {
         let res = match bank_offset {
-            MM_TIME2 => ((self.timer1 >> 14) & 0o37777) as u16,
-            MM_TIME1 => (self.timer1 & 0o37777) as u16,
-            MM_TIME3 => self.timer3,
-            MM_TIME4 => self.timer4,
-            MM_TIME5 => self.timer5,
-            MM_TIME6 => self.timer6,
+            consts::timer::MM_TIME2 => ((self.timer1 >> 14) & 0o37777) as u16,
+            consts::timer::MM_TIME1 => (self.timer1 & 0o37777) as u16,
+            consts::timer::MM_TIME3 => self.timer3,
+            consts::timer::MM_TIME4 => self.timer4,
+            consts::timer::MM_TIME5 => self.timer5,
+            consts::timer::MM_TIME6 => self.timer6,
             _ => 0,
         };
         debug!("Reading TIMER: {:o} = {:o}", bank_offset, res);
@@ -357,22 +350,22 @@ impl AgcMemType for AgcTimers {
             value, bank_offset
         );
         match bank_offset {
-            MM_TIME2 => {
+            consts::timer::MM_TIME2 => {
                 self.set_time_value(TimerType::TIME1, value);
             }
-            MM_TIME1 => {
+            consts::timer::MM_TIME1 => {
                 self.set_time_value(TimerType::TIME1, value);
             }
-            MM_TIME3 => {
+            consts::timer::MM_TIME3 => {
                 self.set_time_value(TimerType::TIME3, value);
             }
-            MM_TIME4 => {
+            consts::timer::MM_TIME4 => {
                 self.set_time_value(TimerType::TIME4, value);
             }
-            MM_TIME5 => {
+            consts::timer::MM_TIME5 => {
                 self.set_time_value(TimerType::TIME5, value);
             }
-            MM_TIME6 => {
+            consts::timer::MM_TIME6 => {
                 self.set_time_value(TimerType::TIME6, value);
             }
             _ => {}
@@ -382,8 +375,8 @@ impl AgcMemType for AgcTimers {
 
 #[cfg(test)]
 mod timer_modules_tests {
-    use crate::mem::timer;
-    use crate::mem::AgcMemType;
+    use crate::mem::{AgcMemType, timer};
+    use crate::consts;
 
     ///
     /// ## Timer Reset Test
@@ -395,11 +388,11 @@ mod timer_modules_tests {
     fn timer_reset_test() {
         let mut timer_mod = timer::AgcTimers::new();
         let timers_addr = [
-            timer::MM_TIME1,
-            timer::MM_TIME3, //timer::MM_TIME2,
-            timer::MM_TIME4,
-            timer::MM_TIME5,
-            timer::MM_TIME6,
+            consts::timer::MM_TIME1,
+            consts::timer::MM_TIME3, //timer::MM_TIME2,
+            consts::timer::MM_TIME4,
+            consts::timer::MM_TIME5,
+            consts::timer::MM_TIME6,
         ];
 
         // Set a known value into the timers so we can compare what it is
@@ -436,32 +429,32 @@ mod timer_modules_tests {
             }
 
             assert_eq!(
-                timers.read(0, super::MM_TIME1),
+                timers.read(0, consts::timer::MM_TIME1),
                 time_idx,
                 "TIME1 did not count properly"
             );
             assert_eq!(
-                timers.read(0, super::MM_TIME2),
+                timers.read(0, consts::timer::MM_TIME2),
                 0,
                 "TIME2 is not the right value"
             );
             assert_eq!(
-                timers.read(0, super::MM_TIME3),
+                timers.read(0, consts::timer::MM_TIME3),
                 time_idx,
                 "TIME3 did not count properly"
             );
             assert_eq!(
-                timers.read(0, super::MM_TIME4),
+                timers.read(0, consts::timer::MM_TIME4),
                 time_idx,
                 "TIME4 did not count properly"
             );
             assert_eq!(
-                timers.read(0, super::MM_TIME5),
+                timers.read(0, consts::timer::MM_TIME5),
                 time_idx,
                 "TIME5 did not count properly"
             );
             assert_eq!(
-                timers.read(0, super::MM_TIME6),
+                timers.read(0, consts::timer::MM_TIME6),
                 0,
                 "TIME6 is not disabled when expected to be"
             );
@@ -481,14 +474,14 @@ mod timer_modules_tests {
         let mut timers = super::AgcTimers::new();
         let mut unprog = heapless::Deque::new();
 
-        timers.write(0, super::MM_TIME1, 0o37777);
+        timers.write(0, consts::timer::MM_TIME1, 0o37777);
         assert_eq!(
-            timers.read(0, super::MM_TIME1),
+            timers.read(0, consts::timer::MM_TIME1),
             0o37777,
             "TIME1 is not being properly set intitially before the test"
         );
         assert_eq!(
-            timers.read(0, super::MM_TIME2),
+            timers.read(0, consts::timer::MM_TIME2),
             0,
             "TIME2 is not being properly set initially before the test"
         );
@@ -498,12 +491,12 @@ mod timer_modules_tests {
         }
 
         assert_eq!(
-            timers.read(0, super::MM_TIME1),
+            timers.read(0, consts::timer::MM_TIME1),
             0o00000,
             "TIME1 did not count properly"
         );
         assert_eq!(
-            timers.read(0, super::MM_TIME2),
+            timers.read(0, consts::timer::MM_TIME2),
             0o00001,
             "TIME2 is not the right value"
         );
@@ -554,7 +547,7 @@ mod timer_modules_tests {
     /// flag is generated because of this.
     ///
     fn test_time3_overflow() {
-        test_time_overflow(super::MM_TIME3, crate::cpu::RUPT_TIME3);
+        test_time_overflow(consts::timer::MM_TIME3, consts::cpu::RUPT_TIME3);
     }
 
     #[test]
@@ -565,7 +558,7 @@ mod timer_modules_tests {
     /// flag is generated because of this.
     ///
     fn test_time4_overflow() {
-        test_time_overflow(super::MM_TIME4, crate::cpu::RUPT_TIME4);
+        test_time_overflow(consts::timer::MM_TIME4, consts::cpu::RUPT_TIME4);
     }
 
     #[test]
@@ -576,7 +569,7 @@ mod timer_modules_tests {
     /// flag is generated because of this.
     ///
     fn test_time5_overflow() {
-        test_time_overflow(super::MM_TIME5, crate::cpu::RUPT_TIME5);
+        test_time_overflow(consts::timer::MM_TIME5, consts::cpu::RUPT_TIME5);
     }
 
     #[test]
@@ -595,20 +588,20 @@ mod timer_modules_tests {
                 timers.pump_mcts(1, &mut unprog);
             }
             assert_eq!(
-                timers.read(0, super::MM_TIME6),
+                timers.read(0, consts::timer::MM_TIME6),
                 0,
                 "TIME6 is not disabled when expected to be"
             );
         }
 
         timers.set_time6_enable(true);
-        timers.write(0, super::MM_TIME6, 0o7);
+        timers.write(0, consts::timer::MM_TIME6, 0o7);
         for time_idx in 1..=5 {
             for _i in 0..54 {
                 timers.pump_mcts(1, &mut unprog);
             }
             assert_eq!(
-                timers.read(0, super::MM_TIME6),
+                timers.read(0, consts::timer::MM_TIME6),
                 0o7 - time_idx,
                 "TIME6 is not disabled when expected to be"
             );
@@ -628,13 +621,13 @@ mod timer_modules_tests {
         let mut unprog = heapless::Deque::new();
 
         timers.set_time6_enable(true);
-        timers.write(0, super::MM_TIME6, 0o1);
+        timers.write(0, consts::timer::MM_TIME6, 0o1);
         let mut interrupt_flags = 0;
         for _i in 0..54 {
             interrupt_flags |= timers.pump_mcts(1, &mut unprog);
         }
         assert_eq!(
-            timers.read(0, super::MM_TIME6),
+            timers.read(0, consts::timer::MM_TIME6),
             0,
             "TIME6 value is not what is expected."
         );
@@ -648,11 +641,11 @@ mod timer_modules_tests {
         }
         assert_eq!(
             interrupt_flags,
-            1 << crate::cpu::RUPT_TIME6,
+            1 << consts::cpu::RUPT_TIME6,
             "Did not get interrupt"
         );
         assert_eq!(
-            timers.read(0, super::MM_TIME6),
+            timers.read(0, consts::timer::MM_TIME6),
             0,
             "TIME6 value is not what is expected."
         );
@@ -675,7 +668,7 @@ mod timer_modules_tests {
         // Enable the timer and prime it with a given value to test when the
         // timer hits 0.
         timers.set_time6_enable(true);
-        timers.write(0, super::MM_TIME6, 0o77776);
+        timers.write(0, consts::timer::MM_TIME6, 0o77776);
 
         // Pump in 54 MCTs which is equivalent to 1/1600 of a second.
         for _i in 0..54 {
@@ -685,7 +678,7 @@ mod timer_modules_tests {
         // Test that we have properly hit -0 and did not set the interrupt value
         // yet. Also TIME6 is not disabled yet. The next increment should be
         assert_eq!(
-            timers.read(0, super::MM_TIME6),
+            timers.read(0, consts::timer::MM_TIME6),
             0o77777,
             "TIME6 value is not what is expected."
         );
@@ -697,11 +690,11 @@ mod timer_modules_tests {
         }
         assert_eq!(
             interrupt_flags,
-            1 << crate::cpu::RUPT_TIME6,
+            1 << consts::cpu::RUPT_TIME6,
             "Did not get interrupt"
         );
         assert_eq!(
-            timers.read(0, super::MM_TIME6),
+            timers.read(0, consts::timer::MM_TIME6),
             0o77777,
             "TIME6 value is not what is expected."
         );

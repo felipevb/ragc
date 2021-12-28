@@ -18,13 +18,8 @@ use log::{error, trace};
 
 use self::periph::AgcIoPeriph;
 
-const _AGC_MM_RAMSIZE: usize = 1024;
-const _AGC_MM_ROMSIZE: usize = 3072;
-
-const AGC_MM_RAM_START: usize = 0o61;
-const AGC_MM_RAM_END: usize = 1023;
-const AGC_MM_ROM_START: usize = 1024;
-const AGC_MM_ROM_END: usize = 4096;
+use crate::consts;
+use crate::consts::memmap;
 
 // ============================================================================
 // Trait Declarations
@@ -64,7 +59,7 @@ impl<'a> AgcMemoryMap<'a> {
         }
     }
 
-    pub fn new(program: &'a [[u16; rom::ROM_BANK_NUM_WORDS]; rom::ROM_BANKS_NUM],
+    pub fn new(program: &'a [[u16; consts::ROM_BANK_NUM_WORDS]; consts::ROM_NUM_BANKS],
                downrupt: &'a mut dyn AgcIoPeriph,
                dsky: &'a mut dyn AgcIoPeriph,
                rupt_tx: Producer<u8, 8>) -> AgcMemoryMap<'a> {
@@ -101,13 +96,13 @@ impl<'a> AgcMemoryMap<'a> {
 
     pub fn write_io(&mut self, idx: usize, value: u16) {
         match idx {
-            io::CHANNEL_L => {
-                self.regs.write(0, crate::cpu::REG_L, value);
+            consts::io::CHANNEL_L => {
+                self.regs.write(0, consts::cpu::REG_L, value);
             }
-            io::CHANNEL_Q => {
-                self.regs.write(0, crate::cpu::REG_Q, value);
+            consts::io::CHANNEL_Q => {
+                self.regs.write(0, consts::cpu::REG_Q, value);
             }
-            io::CHANNEL_SUPERBNK => {
+            consts::io::CHANNEL_SUPERBNK => {
                 if value & 0x40 == 0x40 {
                     self.superbank = true;
                 } else {
@@ -115,7 +110,7 @@ impl<'a> AgcMemoryMap<'a> {
                 }
                 self.io.write(idx, value);
             }
-            io::CHANNEL_CHAN13 => {
+            consts::io::CHANNEL_CHAN13 => {
                 match (value & 0o40000) == 0o40000 {
                     true => {
                         self.timers.set_time6_enable(true);
@@ -126,11 +121,11 @@ impl<'a> AgcMemoryMap<'a> {
                 }
                 self.io.write(idx, value & 0o37777);
             }
-            io::CHANNEL_CHAN34 => {
+            consts::io::CHANNEL_CHAN34 => {
                 self.timers.set_downrupt_flags(1);
                 self.io.write(idx, value);
             }
-            io::CHANNEL_CHAN35 => {
+            consts::io::CHANNEL_CHAN35 => {
                 self.timers.set_downrupt_flags(2);
                 self.io.write(idx, value);
             }
@@ -142,17 +137,17 @@ impl<'a> AgcMemoryMap<'a> {
 
     pub fn read_io(&mut self, idx: usize) -> u16 {
         match idx {
-            io::CHANNEL_L => self.regs.read(0, crate::cpu::REG_L),
-            io::CHANNEL_Q => self.regs.read(0, crate::cpu::REG_Q),
-            io::CHANNEL_HISCALAR => {
+            consts::io::CHANNEL_L => self.regs.read(0, consts::cpu::REG_L),
+            consts::io::CHANNEL_Q => self.regs.read(0, consts::cpu::REG_Q),
+            consts::io::CHANNEL_HISCALAR => {
                 let result = self.timers.read_scalar();
                 ((result >> 14) & 0o37777) as u16
             }
-            io::CHANNEL_LOSCALAR => {
+            consts::io::CHANNEL_LOSCALAR => {
                 let result = self.timers.read_scalar();
                 (result & 0o37777) as u16
             }
-            io::CHANNEL_CHAN13 => {
+            consts::io::CHANNEL_CHAN13 => {
                 let mut res = self.io.read(idx);
                 if self.timers.get_time6_enable() {
                     res |= 0o40000;
@@ -178,14 +173,14 @@ impl<'a> AgcMemoryMap<'a> {
             0o32..=0o60 => {
                 self.special.write(0, idx, val);
             }
-            AGC_MM_RAM_START..=AGC_MM_RAM_END => {
+            memmap::AGC_MM_ERASABLE_START..=memmap::AGC_MM_ERASABLE_END => {
                 if (idx >> 8) == 3 {
                     self.ram.write(self.regs.ebank, (idx & 0xff) as usize, val)
                 } else {
                     self.ram.write(idx >> 8, (idx & 0xff) as usize, val)
                 }
             }
-            AGC_MM_ROM_START..=AGC_MM_ROM_END => {
+            memmap::AGC_MM_FIXED_START..=memmap::AGC_MM_FIXED_END => {
                 if self.rom_debug == false {
                     error!("Writing to ROM location: {:x}", idx);
                     return;
@@ -210,14 +205,14 @@ impl<'a> AgcMemoryMap<'a> {
             0o20..=0o23 => self.edit.read(0, idx),
             0o24..=0o31 => self.timers.read(0, idx),
             0o32..=0o60 => self.special.read(0, idx),
-            AGC_MM_RAM_START..=AGC_MM_RAM_END => {
+            memmap::AGC_MM_ERASABLE_START..=memmap::AGC_MM_ERASABLE_END => {
                 if (idx >> 8) == 3 {
                     self.ram.read(self.regs.ebank, (idx & 0xff) as usize)
                 } else {
                     self.ram.read(idx >> 8, (idx & 0xff) as usize)
                 }
             }
-            AGC_MM_ROM_START..=AGC_MM_ROM_END => {
+            memmap::AGC_MM_FIXED_START..=memmap::AGC_MM_FIXED_END => {
                 if (idx >> 10) == 1 {
                     trace!("Reading from Windowed ROM: {:x} {:x}", self.regs.fbank, idx);
                     match self.regs.fbank {

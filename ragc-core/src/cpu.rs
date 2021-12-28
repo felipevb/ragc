@@ -5,49 +5,7 @@ use crate::instr::{AgcArith, AgcControlFlow, AgcInterrupt, AgcIo, AgcLoadStore, 
 use crate::instr::{AgcInst, AgcMnem};
 use crate::mem::AgcMemoryMap;
 use crate::utils::{overflow_correction, s15_add, sign_extend};
-
-pub const REG_A: usize = 0x0;
-pub const REG_L: usize = 0x1; // Original Name
-pub const _REG_B: usize = 0x1;
-pub const REG_Q: usize = 0x02; // Original Name
-pub const REG_LR: usize = 0x2;
-pub const REG_EB: usize = 0x3;
-pub const REG_FB: usize = 0x4;
-pub const REG_Z: usize = 0x05;
-pub const REG_PC: usize = 0x05;
-pub const REG_BB: usize = 0x6;
-pub const REG_ZERO: usize = 0x7;
-pub const _REG_A_SHADOW: usize = 0x8;
-pub const _REG_B_SHADOW: usize = 0x9;
-pub const _REG_LR_SHADOW: usize = 0xA;
-pub const _REG_EB_SHADOW: usize = 0xB;
-pub const _REG_FB_SHADOW: usize = 0xC;
-pub const REG_PC_SHADOW: usize = 0xD;
-pub const _REG_BB_SHADOW: usize = 0xE;
-
-pub const REG_IR: usize = 0xF;
-pub const _REG_MAX: usize = 0x10;
-
-pub const _RUPT_RESET: u8 = 0x0;
-pub const RUPT_TIME6: u8 = 0x1;
-pub const RUPT_TIME5: u8 = 0x2;
-pub const RUPT_TIME3: u8 = 0x3;
-pub const RUPT_TIME4: u8 = 0x4;
-pub const RUPT_KEY1: u8 = 0x5;
-pub const _RUPT_KEY2: u8 = 0x6;
-pub const _RUPT_UPRUPT: u8 = 0x7;
-pub const RUPT_DOWNRUPT: u8 = 0x8;
-pub const _RUPT_RADAR: u8 = 0x9;
-pub const _RUPT_HANDRUPT: u8 = 0xA;
-
-pub const NIGHTWATCH_TIME: u32 = 1920000000 / 11700;
-
-// Each TC/TCF is 1 cycle, so we just need to have to know how many cycles it
-// takes for 15ms and thats how many TC/TCF instructions we have to see in
-// sequence to reset.
-pub const TCMONITOR_COUNT: u32 = 15000000 / 11700;
-
-pub const RUPT_LOCK_COUNT: i32 = 300000000 / 11700;
+use crate::consts::cpu::*;
 
 #[derive(Debug)]
 #[allow(dead_code)]

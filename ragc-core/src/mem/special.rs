@@ -1,30 +1,7 @@
 use crate::mem::AgcMemType;
+use crate::consts::special::*;
 use heapless::spsc::Producer;
 use log::{error, warn};
-
-const SG_CDUX: usize = 0o32;
-const SG_CDUY: usize = 0o33;
-const SG_CDUZ: usize = 0o34;
-const SG_OPTY: usize = 0o35;
-const SG_OPTX: usize = 0o36;
-const SG_PIPAX: usize = 0o37;
-const SG_PIPAY: usize = 0o40;
-const SG_PIPAZ: usize = 0o41;
-const _SG_RCHP: usize = 0o42;
-const _SG_RCHY: usize = 0o43;
-const _SG_RCHR: usize = 0o44;
-const SG_INLINK: usize = 0o45;
-const _SG_RNRAD: usize = 0o46;
-const _SG_GYROCTR: usize = 0o47;
-const SG_CDUXCMD: usize = 0o50;
-const SG_CDUYCMD: usize = 0o51;
-const SG_CDUZCMD: usize = 0o52;
-const _SG_OPTYCMD: usize = 0o53;
-const _SG_OPTXCMD: usize = 0o54;
-const _SG_THRUST: usize = 0o55; // LM only
-const _SG_LEMONM: usize = 0o56; // LM only
-const SG_OUTLINK: usize = 0o57;
-const _SG_ALTM: usize = 0o60; // LM Only
 
 // =============================================================================
 // Public Structures
