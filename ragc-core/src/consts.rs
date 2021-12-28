@@ -38,13 +38,6 @@ pub mod io {
     pub const CHANNEL_CHAN35: usize = 0o35; // DOWNLIST WORD2
 }
 
-pub mod edit {
-    pub const SG_CYR: usize = 0o20;
-    pub const SG_SR: usize = 0o21;
-    pub const SG_CYL: usize = 0o22;
-    pub const SG_EDOP: usize = 0o23;
-}
-
 pub mod cpu {
     pub const REG_A: usize = 0x0;
     pub const REG_L: usize = 0x1; // Original Name
@@ -88,4 +81,46 @@ pub mod cpu {
     pub const TCMONITOR_COUNT: u32 = 15000000 / 11700;
 
     pub const RUPT_LOCK_COUNT: i32 = 300000000 / 11700;
+}
+
+pub mod edit {
+    pub const SG_CYR: usize = 0o20;
+    pub const SG_SR: usize = 0o21;
+    pub const SG_CYL: usize = 0o22;
+    pub const SG_EDOP: usize = 0o23;
+}
+
+pub mod timer {
+    pub const MM_TIME2: usize = 0o24;
+    pub const MM_TIME1: usize = 0o25;
+    pub const MM_TIME3: usize = 0o26;
+    pub const MM_TIME4: usize = 0o27;
+    pub const MM_TIME5: usize = 0o30;
+    pub const MM_TIME6: usize = 0o31;
+}
+
+pub mod special {
+    pub const SG_CDUX: usize = 0o32;
+    pub const SG_CDUY: usize = 0o33;
+    pub const SG_CDUZ: usize = 0o34;
+    pub const SG_OPTY: usize = 0o35;
+    pub const SG_OPTX: usize = 0o36;
+    pub const SG_PIPAX: usize = 0o37;
+    pub const SG_PIPAY: usize = 0o40;
+    pub const SG_PIPAZ: usize = 0o41;
+    pub const SG_RCHP: usize = 0o42;
+    pub const SG_RCHY: usize = 0o43;
+    pub const SG_RCHR: usize = 0o44;
+    pub const SG_INLINK: usize = 0o45;
+    pub const SG_RNRAD: usize = 0o46;
+    pub const SG_GYROCTR: usize = 0o47;
+    pub const SG_CDUXCMD: usize = 0o50;
+    pub const SG_CDUYCMD: usize = 0o51;
+    pub const SG_CDUZCMD: usize = 0o52;
+    pub const SG_OPTYCMD: usize = 0o53;
+    pub const SG_OPTXCMD: usize = 0o54;
+    pub const SG_THRUST: usize = 0o55; // LM only
+    pub const SG_LEMONM: usize = 0o56; // LM only
+    pub const SG_OUTLINK: usize = 0o57;
+    pub const SG_ALTM: usize = 0o60; // LM Only
 }
