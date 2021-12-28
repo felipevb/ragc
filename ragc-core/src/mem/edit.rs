@@ -1,10 +1,6 @@
 use crate::mem::AgcMemType;
+use crate::consts::edit::{*};
 use log::{error, trace};
-
-const SG_CYR: usize = 0o20;
-const SG_SR: usize = 0o21;
-const SG_CYL: usize = 0o22;
-const SG_EDOP: usize = 0o23;
 
 #[derive(Clone)]
 pub struct AgcEditRegs {

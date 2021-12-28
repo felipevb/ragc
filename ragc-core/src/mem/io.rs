@@ -1,31 +1,9 @@
 use super::periph::engines::LmEngines;
 use super::periph::AgcIoPeriph;
 use crate::{utils::Option as Option};
+use crate::consts::io;
 
 use log::{debug, error, warn};
-
-pub const CHANNEL_L: usize = 0o01;
-pub const CHANNEL_Q: usize = 0o02;
-pub const CHANNEL_HISCALAR: usize = 0o03;
-pub const CHANNEL_LOSCALAR: usize = 0o04;
-pub const CHANNEL_PYJETS: usize = 0o05;
-pub const CHANNEL_ROLLJETS: usize = 0o06;
-pub const CHANNEL_SUPERBNK: usize = 0o07; // Only bits[7:5] and only 0XX or 100 are
-                                          // valid
-pub const CHANNEL_DSKY: usize = 0o10;
-pub const CHANNEL_DSALMOUT: usize = 0o11;
-pub const CHANNEL_CHAN12: usize = 0o12;
-pub const CHANNEL_CHAN13: usize = 0o13;
-pub const CHANNEL_CHAN14: usize = 0o14;
-pub const CHANNEL_MNKEYIN: usize = 0o15;
-pub const CHANNEL_NAVKEYIN: usize = 0o16;
-
-pub const CHANNEL_CHAN30: usize = 0o30;
-pub const CHANNEL_CHAN31: usize = 0o31;
-pub const CHANNEL_CHAN32: usize = 0o32;
-pub const CHANNEL_CHAN33: usize = 0o33;
-pub const CHANNEL_CHAN34: usize = 0o34; // DOWNLIST WORD1
-pub const CHANNEL_CHAN35: usize = 0o35; // DOWNLIST WORD2
 
 pub struct AgcIoSpace<'a> {
     io_mem: [u16; 256],
@@ -109,19 +87,19 @@ impl<'a> AgcIoSpace<'a> {
         match channel_idx {
             // # CHANNEL 1     IDENTICAL TO COMPUTER REGISTER L (0001)
             // # CHANNEL 2     IDENTICAL TO COMPUTER REGISTER Q (0002)
-            //CHANNEL_L => { self.parent.read(crate::cpu::REG_L) }
-            //CHANNEL_Q => { self.parent.read(crate::cpu::REG_Q) }
+            //io::CHANNEL_L => { self.parent.read(crate::cpu::REG_L) }
+            //io::CHANNEL_Q => { self.parent.read(crate::cpu::REG_Q) }
 
             // # CHANNEL 3     HISCALAR; INPUT CHANNEL; MOST SIGNIFICANT 14 BITS FROM 33 STAGE BINARY COUNTER. SCALE
             // #               FACTOR IS B23 IN CSEC, SO MAX VALUE ABOUT 23.3 HOURS AND LEAST SIGNIFICANT BIT 5.12 SECS.
             // # CHANNEL 4     LOSCALAR; INPUT CHANNEL; NEXT MOST SIGNIFICANT 14 BITS FROM THE 33 STAGE BINARY COUNTER
             // #               ASSOCIATED WITH CHANNEL 3. SCALE FACTOR IS B9 IN  CSEC. SO MAX VAL IS 5.12 SEC AND LEAST
             // #               SIGNIFICANT BIT IS 1/3200 SEC. SCALE FACTOR OF D.P. WORD WITH CHANNEL 3 IS B23 CSEC.
-            CHANNEL_LOSCALAR | CHANNEL_HISCALAR => 0,
+            io::CHANNEL_LOSCALAR | io::CHANNEL_HISCALAR => 0,
 
             // # CHANNEL 7     SUPERBNK; OUTPUT CHANNEL; NOT RESET BY RESTART;   FIXED EXTENSION BITS USED TO SELECT THE
             // #               APPROPRIATE FIXED MEMORY BANK IF FBANK IS 30 OCTAL OR MORE. USES BITS 5-7.
-            CHANNEL_SUPERBNK => self.io_mem[channel_idx] & 0o00160,
+            io::CHANNEL_SUPERBNK => self.io_mem[channel_idx] & 0o00160,
 
             // # CHANNEL 5     PYJETS; OUTPUT CHANNEL; PITCH RCS JET CONTROL.   (REACTION CONTROL SYSTEM) USES BITS 1-8.
             //
@@ -130,9 +108,9 @@ impl<'a> AgcIoSpace<'a> {
             // # CHANNEL 10    OUTO; OUTPUT CHANNEL; REGISTER USED TO TRANSMIT  LATCHING-RELAY DRIVING INFORMATION FOR
             // #               THE DISPLAY SYSTEM. BITS 15-12 ARE SET TO THE ROW NUMBER (1-14 OCTAL) OF THE RELAY TO BE
             // #               CHANGED AND BITS 11-1 CONTAIN THE REQUIRED SETTINGS FOR THE RELAYS IN THE ROW.
-            CHANNEL_PYJETS | CHANNEL_ROLLJETS => self.io_mem[channel_idx],
+            io::CHANNEL_PYJETS | io::CHANNEL_ROLLJETS => self.io_mem[channel_idx],
 
-            CHANNEL_DSKY => {
+            io::CHANNEL_DSKY => {
                 warn!("DSKY: Reading from DSKY value. which is weird");
                 0
             }
@@ -155,7 +133,7 @@ impl<'a> AgcIoSpace<'a> {
             // #               BIT 13          ENGINE ON
             // #               BIT 14          ENGINE OFF
             // #               BIT 15          SPARE
-            CHANNEL_DSALMOUT => self.io_mem[CHANNEL_DSALMOUT], //self.handle_channel11_read(),
+            io::CHANNEL_DSALMOUT => self.io_mem[io::CHANNEL_DSALMOUT], //self.handle_channel11_read(),
 
             // # CHANNEL 12    CHAN12; OUTPUT CHANNEL; BITS USED TO DRIVE NAVIGATION AND SPAECRAFT HARDWARE
             //
@@ -174,7 +152,7 @@ impl<'a> AgcIoSpace<'a> {
             // #               BIT 13          LR POSITION 2 COMMAND
             // #               BIT 14          ENABLE RENDESVOUS RADAR LOCK-ON;AUTO ANGLE TRACK'G
             // #               BIT 15          ISS TURN ON DELAY COMPLETE
-            CHANNEL_CHAN12 => self.io_mem[CHANNEL_CHAN12],
+            io::CHANNEL_CHAN12 => self.io_mem[io::CHANNEL_CHAN12],
 
             // ## Page 56
             // # CHANNEL 13    CHAN13; OUTPUT CHANNEL
@@ -194,7 +172,7 @@ impl<'a> AgcIoSpace<'a> {
             // #               BIT 13          RESET TRAP 31-B         ALWAYS APPEAR TO BE SET TO 0
             // #               BIT 14          RESET TRAP 32           ALWAYS APPEAR TO BE SET TO 0
             // #               BIT 15          ENABLE T6 RUPT
-            CHANNEL_CHAN13 => self.io_mem[CHANNEL_CHAN13] & 0x47CF,
+            io::CHANNEL_CHAN13 => self.io_mem[io::CHANNEL_CHAN13] & 0x47CF,
 
             // # CHANNEL 14    CHAN14; OUTPUT CHANNEL; USED TO CONTROL COMPUTER COUNTER CELLS (CDU,GYRO,SPACECRAFT FUNC.
             //
@@ -214,11 +192,11 @@ impl<'a> AgcIoSpace<'a> {
             // #               BIT 13          DRIVE CDU Z
             // #               BIT 14          DRIVE CDU Y
             // #               BIT 15          DRIVE CDU X
-            CHANNEL_CHAN14 => self.io_mem[CHANNEL_CHAN14],
+            io::CHANNEL_CHAN14 => self.io_mem[io::CHANNEL_CHAN14],
 
             // # CHANNEL 15    MNKEYIN; INPUT CHANNEL;KEY CODE INPUT FROM KEYBOARD OF DSKY, SENSED BY PROGRAM WHEN
             // #               PROGRAM INTERRUPT #5 IS RECEIVED. USES BITS 5-1
-            CHANNEL_MNKEYIN => {
+            io::CHANNEL_MNKEYIN => {
                 match &self.dsky {
                     Option::Some(x) => {
                         x.read(channel_idx)
@@ -236,7 +214,7 @@ impl<'a> AgcIoSpace<'a> {
             // #               BIT 5           OPTICS MARK REJECT SIGNAL
             // #               BIT 6           DESCENT+ ; CREW DESIRED SLOWING RATE OF DESCENT
             // #               BIT 7           DESCENT- ; CREW DESIRED SPEEDING UP RATE OF D'CENT
-            CHANNEL_NAVKEYIN => 0,
+            io::CHANNEL_NAVKEYIN => 0,
 
             // # NOTE: ALL BITS IN CHANNELS 30-33 ARE INVERTED AS SENSED BY THE  PROGRAM, SO THAT A VALUE OF ZERO MEANS
             // # THAT THE INDICATED SIGNAL IS PRESENT.
@@ -259,7 +237,7 @@ impl<'a> AgcIoSpace<'a> {
             // #               BIT 13          IMU FAIL (MALFUNCTION OF IMU STABILIZATION LOOPS)
             // #               BIT 14          ISS TURN ON REQUESTED
             // #               BIT 15          TEMPERATURE OF STABLE MEMBER WITHIN DESIGN LIMITS
-            CHANNEL_CHAN30 => self.handle_channel30_read(),
+            io::CHANNEL_CHAN30 => self.handle_channel30_read(),
 
             // # CHANNEL 31    INPUT CHANNEL; BITS ASSOCIATED WITH THE ATTITUDE CONTROLLER, TRANSLATIONAL CONTROLLER,
             // #               AND SPACECRAFT ATTITUDE CONTROL; USED BY RCS DAP
@@ -282,7 +260,7 @@ impl<'a> AgcIoSpace<'a> {
             // #               BIT 13          ATTITUDE HOLD MODE ON SCS MODE CONTROL SWITCH
             // #               BIT 14          AUTO STABILIZATION OF ATTITUDE ON SCS MODE SWITCH
             // #               BIT 15          ATTITUDE CONTROL OUT OF DETENT (RHC NOT IN NEUTRAL
-            CHANNEL_CHAN31 => 0o77777,
+            io::CHANNEL_CHAN31 => 0o77777,
 
             // # CHANNEL 32    INPUT CHANNEL.
             //
@@ -297,7 +275,7 @@ impl<'a> AgcIoSpace<'a> {
             // #               BIT 9              DESCENT ENGINE GIMBALS DISABLED BY CREW
             // #               BIT 10             APPARENT DESCENT ENGINE GIMBAL FAILURE
             // #               BIT 14             INDICATES PROCEED KEY IS DEPRESSED
-            CHANNEL_CHAN32 => {
+            io::CHANNEL_CHAN32 => {
                 let val = match &self.dsky {
                     Option::Some(x) => {
                         x.read(channel_idx)
@@ -327,11 +305,11 @@ impl<'a> AgcIoSpace<'a> {
             // #               BIT 13          PIPA FAIL
             // #               BIT 14          WARNING OF REPEATED ALARMS: RESTART,COUNTER FAIL, VOLTAGE FAIL,AND SCALAR DOUBLE.
             // #               BIT 15          LGC OSCILLATOR STOPPED
-            CHANNEL_CHAN33 => 0o77777,
+            io::CHANNEL_CHAN33 => 0o77777,
 
             // # CHANNEL 34    DNT M1; OUTPUT CHANNEL; DOWNLINK 1  FIRST OF TWO WORDS SERIALIZATION.
             // # CHANNEL 35    DNT M2; OUTPUT CHANNEL DOWNLINK 2 SOCOND OF TWO   WORDS SERIALIZATION.
-            CHANNEL_CHAN34 | CHANNEL_CHAN35 => {
+            io::CHANNEL_CHAN34 | io::CHANNEL_CHAN35 => {
                 match &self.downrupt {
                     Option::Some(x) => {
                         x.read(channel_idx)
@@ -376,14 +354,14 @@ impl<'a> AgcIoSpace<'a> {
         }
 
         match channel_idx {
-            CHANNEL_DSALMOUT => {
-                self.io_mem[CHANNEL_DSALMOUT] = val; //val & 0x33FF;
+            io::CHANNEL_DSALMOUT => {
+                self.io_mem[io::CHANNEL_DSALMOUT] = val; //val & 0x33FF;
             }
-            CHANNEL_SUPERBNK => self.io_mem[channel_idx] = val & 0o00160,
-            CHANNEL_CHAN13 => {
-                self.io_mem[CHANNEL_CHAN13] = val;
+            io::CHANNEL_SUPERBNK => self.io_mem[channel_idx] = val & 0o00160,
+            io::CHANNEL_CHAN13 => {
+                self.io_mem[io::CHANNEL_CHAN13] = val;
             }
-            CHANNEL_CHAN32 => {
+            io::CHANNEL_CHAN32 => {
                 warn!("Attempting to write to IO CHAN32 which is only an input");
             }
             _ => {

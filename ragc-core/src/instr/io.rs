@@ -1,6 +1,7 @@
 use super::AgcInst;
-use crate::cpu::*;
+use crate::cpu::AgcCpu;
 use crate::utils::{overflow_correction, sign_extend};
+use crate::consts::cpu::*;
 
 use log::debug;
 

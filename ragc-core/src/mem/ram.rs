@@ -52,9 +52,9 @@ impl AgcMemType for AgcRam {
     ///    and `bank_offset`
     ///
     fn read(&self, bank_idx: usize, bank_offset: usize) -> u16 {
-        let res = if bank_idx == 0x0 && bank_offset == cpu::REG_A {
+        let res = if bank_idx == 0x0 && bank_offset == consts::cpu::REG_A {
             self.banks[bank_idx][bank_offset]
-        } else if bank_idx == 0x0 && bank_offset == cpu::REG_Q {
+        } else if bank_idx == 0x0 && bank_offset == consts::cpu::REG_Q {
             self.banks[bank_idx][bank_offset]
         } else {
             self.banks[bank_idx][bank_offset] & 0x7FFF
@@ -86,9 +86,9 @@ impl AgcMemType for AgcRam {
             bank_offset,
             value
         );
-        if bank_idx == 0x0 && bank_offset == cpu::REG_A {
+        if bank_idx == 0x0 && bank_offset == consts::cpu::REG_A {
             self.banks[bank_idx][bank_offset] = value;
-        } else if bank_idx == 0x0 && bank_offset == cpu::REG_Q {
+        } else if bank_idx == 0x0 && bank_offset == consts::cpu::REG_Q {
             self.banks[bank_idx][bank_offset] = value;
         } else {
             let a = value & 0x7FFF;
@@ -199,7 +199,7 @@ mod agc_ram_tests {
     #[test]
     fn test_read_s16_locations() {
         let mut ram = AgcRam::new();
-        let regs_16bit = [cpu::REG_A, cpu::REG_Q];
+        let regs_16bit = [consts::cpu::REG_A, consts::cpu::REG_Q];
 
         // Testing 16Bit
         for reg_idx in regs_16bit.iter() {
@@ -254,7 +254,7 @@ mod agc_ram_tests {
     #[test]
     fn test_write_s16_locations() {
         let mut ram = AgcRam::new();
-        let regs_16bit = [cpu::REG_A, cpu::REG_Q];
+        let regs_16bit = [consts::cpu::REG_A, consts::cpu::REG_Q];
 
         // Testing 16Bit
         for reg_idx in regs_16bit.iter() {

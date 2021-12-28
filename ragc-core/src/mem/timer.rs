@@ -1,6 +1,7 @@
 use crate::cpu;
 use crate::cpu::AgcUnprogSeq;
 use crate::mem::AgcMemType;
+use crate::consts;
 
 use heapless::Deque;
 
@@ -147,7 +148,7 @@ impl AgcTimers {
                     // If we are hitting the case where we got to zero, disable
                     // the timer and send the interrupt mask.
                     self.time6_enable = false;
-                    interrupt_mask |= 1 << cpu::RUPT_TIME6;
+                    interrupt_mask |= 1 << consts::cpu::RUPT_TIME6;
                 } else {
                     // Otherwise, we do an ABS value decrement of TIME6 register.
                     // Per the documentation.
@@ -198,7 +199,7 @@ impl AgcTimers {
         self.timer4 = (self.timer4 + 1) & 0o77777;
         if self.timer4 == 0o40000 {
             self.timer4 = 0;
-            return 1 << cpu::RUPT_TIME4;
+            return 1 << consts::cpu::RUPT_TIME4;
         }
 
         0
@@ -208,7 +209,7 @@ impl AgcTimers {
         self.timer5 = (self.timer5 + 1) & 0o77777;
         if self.timer5 == 0o40000 {
             self.timer5 = 0;
-            return 1 << cpu::RUPT_TIME5;
+            return 1 << consts::cpu::RUPT_TIME5;
         }
 
         0
@@ -248,7 +249,7 @@ impl AgcTimers {
     pub fn handle_downrupt(&mut self) -> u16 {
         //self.dnrupt_counter += 1;
         //if self.dnrupt_counter % 2 == 0 {
-        return 1 << cpu::RUPT_DOWNRUPT;
+        return 1 << consts::cpu::RUPT_DOWNRUPT;
         //}
         //0
     }
@@ -264,7 +265,7 @@ impl AgcTimers {
         if self.timer3 == 0o40000 {
             self.timer3 = 0;
             debug!("New TIMER3 interrupt!");
-            return 1 << cpu::RUPT_TIME3;
+            return 1 << consts::cpu::RUPT_TIME3;
         }
 
         0
@@ -382,8 +383,8 @@ impl AgcMemType for AgcTimers {
 
 #[cfg(test)]
 mod timer_modules_tests {
-    use crate::mem::timer;
-    use crate::mem::AgcMemType;
+    use crate::mem::{AgcMemType, timer};
+    use crate::consts;
 
     ///
     /// ## Timer Reset Test
@@ -554,7 +555,7 @@ mod timer_modules_tests {
     /// flag is generated because of this.
     ///
     fn test_time3_overflow() {
-        test_time_overflow(super::MM_TIME3, crate::cpu::RUPT_TIME3);
+        test_time_overflow(super::MM_TIME3, consts::cpu::RUPT_TIME3);
     }
 
     #[test]
@@ -565,7 +566,7 @@ mod timer_modules_tests {
     /// flag is generated because of this.
     ///
     fn test_time4_overflow() {
-        test_time_overflow(super::MM_TIME4, crate::cpu::RUPT_TIME4);
+        test_time_overflow(super::MM_TIME4, consts::cpu::RUPT_TIME4);
     }
 
     #[test]
@@ -576,7 +577,7 @@ mod timer_modules_tests {
     /// flag is generated because of this.
     ///
     fn test_time5_overflow() {
-        test_time_overflow(super::MM_TIME5, crate::cpu::RUPT_TIME5);
+        test_time_overflow(super::MM_TIME5, consts::cpu::RUPT_TIME5);
     }
 
     #[test]
@@ -648,7 +649,7 @@ mod timer_modules_tests {
         }
         assert_eq!(
             interrupt_flags,
-            1 << crate::cpu::RUPT_TIME6,
+            1 << consts::cpu::RUPT_TIME6,
             "Did not get interrupt"
         );
         assert_eq!(
@@ -697,7 +698,7 @@ mod timer_modules_tests {
         }
         assert_eq!(
             interrupt_flags,
-            1 << crate::cpu::RUPT_TIME6,
+            1 << consts::cpu::RUPT_TIME6,
             "Did not get interrupt"
         );
         assert_eq!(

@@ -1,6 +1,6 @@
 use super::AgcInst;
-use crate::cpu;
-use crate::cpu::*;
+use crate::cpu::AgcCpu;
+use crate::consts::cpu::*;
 
 pub trait AgcLogic {
     fn mask(&mut self, inst: &AgcInst) -> u16;
@@ -28,7 +28,7 @@ impl <'a>AgcLogic for AgcCpu<'a> {
     fn mask(&mut self, inst: &AgcInst) -> u16 {
         let k = inst.get_kaddr();
         match k {
-            cpu::REG_A | cpu::REG_Q => {
+            REG_A | REG_Q => {
                 let mut val = self.read_s16(k);
                 val = self.read_s16(REG_A) & val;
                 self.write_s16(REG_A, val);
