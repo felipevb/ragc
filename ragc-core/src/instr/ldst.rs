@@ -3,7 +3,7 @@ use crate::cpu::AgcCpu;
 use crate::consts::cpu::*;
 use crate::utils;
 
-use log::debug;
+//use log::debug;
 
 pub trait AgcLoadStore {
     fn cs(&mut self, inst: &AgcInst) -> u16;
@@ -21,7 +21,7 @@ impl <'a>AgcLoadStore for AgcCpu<'a> {
     fn cs(&mut self, inst: &AgcInst) -> u16 {
         let addr: usize = inst.get_data_bits() as usize;
         let mut val = self.read_s16(addr);
-        //debug!("Addr/Val: {:x?}/{:x?}", addr, val);
+        ////debug!("Addr/Val: {:x?}/{:x?}", addr, val);
 
         val = !val;
         val = val & 0xFFFF;
@@ -147,12 +147,12 @@ impl <'a>AgcLoadStore for AgcCpu<'a> {
         let v = self.read_s16(k);
         let v_q = self.read_s16(REG_A);
 
-        debug!(
-            "XCH: {:x} {:x} {:x}",
-            k,
-            utils::sign_extend(v),
-            utils::overflow_correction(v_q)
-        );
+        //debug!(
+        //    "XCH: {:x} {:x} {:x}",
+        //    k,
+        //    utils::sign_extend(v),
+        //    utils::overflow_correction(v_q)
+        //);
         self.write_s16(k, utils::overflow_correction(v_q));
         self.write_s16(REG_A, v);
         2

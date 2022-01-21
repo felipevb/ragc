@@ -3,7 +3,7 @@ use super::periph::AgcIoPeriph;
 use crate::{utils::Option as Option};
 use crate::consts::io;
 
-use log::{debug, error, warn};
+//use log::{debug, error, warn};
 
 pub struct AgcIoSpace<'a> {
     io_mem: [u16; 256],
@@ -83,7 +83,7 @@ impl<'a> AgcIoSpace<'a> {
     }
 
     pub fn read(&mut self, channel_idx: usize) -> u16 {
-        debug!("IO Space Read: 0o{:o}", channel_idx);
+        //debug!("IO Space Read: 0o{:o}", channel_idx);
         match channel_idx {
             // # CHANNEL 1     IDENTICAL TO COMPUTER REGISTER L (0001)
             // # CHANNEL 2     IDENTICAL TO COMPUTER REGISTER Q (0002)
@@ -111,7 +111,7 @@ impl<'a> AgcIoSpace<'a> {
             io::CHANNEL_PYJETS | io::CHANNEL_ROLLJETS => self.io_mem[channel_idx],
 
             io::CHANNEL_DSKY => {
-                warn!("DSKY: Reading from DSKY value. which is weird");
+                //warn!("DSKY: Reading from DSKY value. which is weird");
                 0
             }
             // # CHANNEL 11    DSALMOUT; OUTPUT CHANNEL; REGISTER WHOSE BITS ARE USED FOR ENGINE ON-OFF CONTROL AND TO
@@ -326,14 +326,14 @@ impl<'a> AgcIoSpace<'a> {
                 }
             },
             _ => {
-                error!("Unknown IO Channel: {:o}", channel_idx);
+                //error!("Unknown IO Channel: {:o}", channel_idx);
                 self.io_mem[channel_idx]
             }
         }
     }
 
     pub fn write(&mut self, channel_idx: usize, val: u16) {
-        debug!("IO Space Write: {:x} {:x}", channel_idx, val);
+        //debug!("IO Space Write: {:x} {:x}", channel_idx, val);
 
         // Handle the case of the DSKY Object and perform a write,
         // if needed
@@ -362,7 +362,7 @@ impl<'a> AgcIoSpace<'a> {
                 self.io_mem[io::CHANNEL_CHAN13] = val;
             }
             io::CHANNEL_CHAN32 => {
-                warn!("Attempting to write to IO CHAN32 which is only an input");
+                //warn!("Attempting to write to IO CHAN32 which is only an input");
             }
             _ => {
                 self.io_mem[channel_idx] = val;

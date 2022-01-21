@@ -1,6 +1,6 @@
 use crate::consts;
 use crate::mem::AgcMemType;
-use log::debug;
+//use log::debug;
 
 #[derive(Clone)]
 pub struct AgcRegs {
@@ -32,10 +32,10 @@ impl AgcRegs {
         self.regs[consts::cpu::REG_EB] = evalue;
         self.regs[consts::cpu::REG_FB] = fvalue;
         self.regs[consts::cpu::REG_BB] = bvalue;
-        debug!(
-            "Updating Bank Registers: {:x} | {:x} | {:x}",
-            evalue, fvalue, bvalue
-        );
+        //debug!(
+        //    "Updating Bank Registers: {:x} | {:x} | {:x}",
+        //    evalue, fvalue, bvalue
+        //);
     }
 }
 

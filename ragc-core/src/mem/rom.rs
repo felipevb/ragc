@@ -1,4 +1,4 @@
-use log::{info, warn};
+//use log::{info, warn};
 
 use crate::mem::AgcMemType;
 use crate::consts;
@@ -19,10 +19,10 @@ pub struct AgcRom<'a> {
 impl <'a>AgcMemType for AgcRom<'a> {
     fn read(&self, bank_idx: usize, bank_offset: usize) -> u16 {
         if bank_idx >= consts::ROM_NUM_BANKS || bank_offset >= consts::ROM_BANK_NUM_WORDS {
-            warn!(
-                "Out of bound indexing into AgcRom {} {}",
-                bank_idx, bank_offset
-            );
+            //warn!(
+            //    "Out of bound indexing into AgcRom {} {}",
+            //    bank_idx, bank_offset
+            //);
             return 0x0;
         }
         match self.program {
@@ -45,14 +45,14 @@ impl <'a>AgcMemType for AgcRom<'a> {
 
     fn write(&mut self, bank_idx: usize, bank_offset: usize, value: u16) {
         if bank_idx >= consts::ROM_NUM_BANKS || bank_offset >= consts::ROM_BANK_NUM_WORDS {
-            warn!(
-                "Out of bound indexing into AgcRom {} {}",
-                bank_idx, bank_offset
-            );
+            //warn!(
+            //    "Out of bound indexing into AgcRom {} {}",
+            //    bank_idx, bank_offset
+            //);
             return;
         }
-        warn!("Attempting to write to AGC ROM. Ignoring write {:03o}{:03o} <= {:05o}",
-                bank_idx, bank_offset, value);
+        //warn!("Attempting to write to AGC ROM. Ignoring write {:03o}{:03o} <= {:05o}",
+        //        bank_idx, bank_offset, value);
     }
 }
 
@@ -74,17 +74,17 @@ impl <'a>AgcRom<'a> {
         match self.program {
             Option::Some(program) => {
                 for (idx, b) in program.iter().enumerate() {
-                    info!("Bank {}", idx);
+                    //info!("Bank {}", idx);
                     for v in b.chunks(8) {
-                        info!(
-                            "\t{:04x} {:04x} {:04x} {:04x} {:04x} {:04x} {:04x} {:04x}",
-                            v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7]
-                        );
+                        //info!(
+                        //    "\t{:04x} {:04x} {:04x} {:04x} {:04x} {:04x} {:04x} {:04x}",
+                        //    v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7]
+                        //);
                     }
                 }
             },
             Option::None => {
-                info!("ROM is Blank.");
+                //info!("ROM is Blank.");
             }
         }
     }

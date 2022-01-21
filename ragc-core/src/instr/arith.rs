@@ -2,7 +2,7 @@ use super::AgcInst;
 use crate::cpu::AgcCpu;
 use crate::consts::cpu::*;
 
-use log::{debug, error, trace};
+//use log::{debug, error, trace};
 
 fn s15_abs(value: u16) -> u16 {
     if value & 0o40000 == 0o40000 {
@@ -100,7 +100,7 @@ impl<'a> AgcArith for AgcCpu<'a> {
             res += 1;
         }
 
-        //debug!("A: {:x} | K: {:x} = R {:x}", a, k, res);
+        ////debug!("A: {:x} | K: {:x} = R {:x}", a, k, res);
         self.write_s16(REG_A, (res & 0xFFFF) as u16);
         self.check_editing(inst.get_kaddr());
         2
@@ -176,7 +176,7 @@ impl<'a> AgcArith for AgcCpu<'a> {
                     0o100000 => v - 1,
                     0o000000 => v + 1,
                     _ => {
-                        error! {"This should be hit"};
+                        //error! {"This should be hit"};
                         0
                     }
                 };
@@ -188,7 +188,7 @@ impl<'a> AgcArith for AgcCpu<'a> {
                     0o40000 => v - 1,
                     0o00000 => v + 1,
                     _ => {
-                        error! {"This should be hit"};
+                        //error! {"This should be hit"};
                         0
                     }
                 };
@@ -270,7 +270,7 @@ impl<'a> AgcArith for AgcCpu<'a> {
     fn incr(&mut self, inst: &AgcInst) -> u16 {
         let k = inst.get_kaddr_ram();
         let val: u32 = self.read(k) as u32;
-        trace!("INCR: {:x}: {:x}", k, val);
+        //trace!("INCR: {:x}: {:x}", k, val);
 
         let kval = match k {
             REG_A | REG_Q => match val {
@@ -331,7 +331,7 @@ impl<'a> AgcArith for AgcCpu<'a> {
                     res = (res + 0o177777) & 0o177777;
                 }
 
-                trace!("MSU16: A2{:6o} - K2{:6o} = A1{:6o}", aval, kval, res);
+                //trace!("MSU16: A2{:6o} - K2{:6o} = A1{:6o}", aval, kval, res);
                 self.write_s16(REG_A, (res & 0o177777) as u16);
             }
             _ => {
@@ -342,7 +342,7 @@ impl<'a> AgcArith for AgcCpu<'a> {
                     res = (res + 0o77777) & 0o77777;
                 }
 
-                trace!("MSU15: A2{:5o} - K2{:5o} = A1{:5o}", aval, kval, res);
+                //trace!("MSU15: A2{:5o} - K2{:5o} = A1{:5o}", aval, kval, res);
                 self.write_s15(REG_A, res);
             }
         }
@@ -364,7 +364,7 @@ impl<'a> AgcArith for AgcCpu<'a> {
     fn dim(&mut self, inst: &AgcInst) -> u16 {
         let k = inst.get_kaddr_ram();
         let kval = self.read_s16(k);
-        debug!("DIM: {:x}: {:x}", k, kval);
+        //debug!("DIM: {:x}: {:x}", k, kval);
 
         // Check to see what we need to do with this value. Depending on what
         // value we read, we perform different operations
@@ -468,7 +468,7 @@ impl<'a> AgcArith for AgcCpu<'a> {
                 self.write_s15(REG_L, dividend_upper);
                 return 6;
             } else {
-                log::warn!("Undefined behavior for DV!");
+                //log::warn!("Undefined behavior for DV!");
             }
 
             return 6;

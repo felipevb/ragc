@@ -1,6 +1,6 @@
 use crate::mem::AgcMemType;
 use crate::consts::edit::{*};
-use log::{error, trace};
+//use log::{error, trace};
 
 #[derive(Clone)]
 pub struct AgcEditRegs {
@@ -31,14 +31,14 @@ impl AgcEditRegs {
 
 impl AgcMemType for AgcEditRegs {
     fn read(&self, _bank_idx: usize, bank_offset: usize) -> u16 {
-        trace!("Edit Read: 0o{:o}", bank_offset);
+        //trace!("Edit Read: 0o{:o}", bank_offset);
         match bank_offset {
             SG_CYL => self.cyl,
             SG_CYR => self.cyr,
             SG_SR => self.sr,
             SG_EDOP => self.edop,
             _ => {
-                error!("Invalid EditRegister Read: 0o{:o}", bank_offset);
+                //error!("Invalid EditRegister Read: 0o{:o}", bank_offset);
                 0
             }
         }
@@ -46,7 +46,7 @@ impl AgcMemType for AgcEditRegs {
 
     fn write(&mut self, _bank_idx: usize, bank_offset: usize, value: u16) {
         let newval = value & 0x7FFF;
-        trace!("Edit Write: 0o{:o}", bank_offset);
+        //trace!("Edit Write: 0o{:o}", bank_offset);
 
         match bank_offset {
             SG_CYL => {
@@ -64,7 +64,7 @@ impl AgcMemType for AgcEditRegs {
             }
             SG_EDOP => self.edop = (newval >> 7) & 0o177,
             _ => {
-                error!("Invalid EditRegister Write: {:o}", bank_offset);
+                //error!("Invalid EditRegister Write: {:o}", bank_offset);
             }
         }
     }

@@ -1,4 +1,4 @@
-use log::{debug, info, trace, warn, error};
+//use log::{debug, info, trace, warn, error};
 
 use crate::disasm::disasm;
 use crate::instr::{AgcArith, AgcControlFlow, AgcInterrupt, AgcIo, AgcLoadStore, AgcLogic};
@@ -65,7 +65,7 @@ pub struct AgcCpu<'a> {
 
 impl <'a>AgcUnprogInstr for AgcCpu<'a> {
     fn handle_goj(&mut self) -> u16 {
-        debug!("Handling GOJ (Restart of AGC)");
+        //debug!("Handling GOJ (Restart of AGC)");
 
         // Within Memo #340, the following is listed on what GOJAM actions should
         // be performed.
@@ -177,10 +177,10 @@ impl <'a>AgcCpu<'a> {
     }
 
     pub fn set_unprog_seq(&mut self, unprog_type: AgcUnprogSeq) {
-        debug!("Setting UnprogSeq: {:?}", unprog_type);
+        //debug!("Setting UnprogSeq: {:?}", unprog_type);
         match self.unprog.push_back(unprog_type) {
             Err(x) => {
-                error!("Unable to push Unprogram Sequence {:?} in AgcCpu Queue", x);
+                //error!("Unable to push Unprogram Sequence {:?} in AgcCpu Queue", x);
             },
             _ => {}
         }
@@ -387,7 +387,7 @@ impl <'a>AgcCpu<'a> {
     }
 
     fn handle_rupt(&mut self) {
-        debug!("Interrupt Mask: {:x}", self.rupt);
+        //debug!("Interrupt Mask: {:x}", self.rupt);
         for i in 0..10 {
             let mask = 1 << i;
             if self.rupt & mask != 0 {
@@ -482,7 +482,7 @@ impl <'a>AgcCpu<'a> {
             }
             AgcMnem::XCH => self.xch(&inst),
             _ => {
-                warn!("Unimplemented Execution of Instruction: {:?}", inst.mnem);
+                //warn!("Unimplemented Execution of Instruction: {:?}", inst.mnem);
                 self.ec_flag = false;
                 self.idx_val = 0x0;
                 0
@@ -492,29 +492,29 @@ impl <'a>AgcCpu<'a> {
     }
 
     pub fn print_state(&mut self) {
-        info!("=========================================================");
-        //debug!("AGCCpu State:");
-        info!(
-            "A: {:04x} L: {:04x} Q: {:04x} EB: {:04x} FB: {:04x} Z: {:04x} BB: {:04x}",
-            self.read(0),
-            self.read(1),
-            self.read(2),
-            self.read(3),
-            self.read(4),
-            self.read(5),
-            self.read(6)
-        );
-        info!(
-            "A': {:04x} L': {:04x} Q': {:04x} Z': {:04x} BB': {:04x} IR: {:04x}",
-            self.read(8),
-            self.read(9),
-            self.read(0xA),
-            self.read(0xD),
-            self.read(0xE),
-            self.read(0xF)
-        );
-        info!("IntMask: {:x} {:?}", self.rupt, self.gint);
-        info!("IR: {:x} | INDEX: {:x}", self.ir, self.idx_val);
+        //info!("=========================================================");
+        ////debug!("AGCCpu State:");
+        //info!(
+        //    "A: {:04x} L: {:04x} Q: {:04x} EB: {:04x} FB: {:04x} Z: {:04x} BB: {:04x}",
+        //    self.read(0),
+        //    self.read(1),
+        //    self.read(2),
+        //    self.read(3),
+        //    self.read(4),
+        //    self.read(5),
+        //    self.read(6)
+        //);
+        //info!(
+        //    "A': {:04x} L': {:04x} Q': {:04x} Z': {:04x} BB': {:04x} IR: {:04x}",
+        //    self.read(8),
+        //    self.read(9),
+        //    self.read(0xA),
+        //    self.read(0xD),
+        //    self.read(0xE),
+        //    self.read(0xF)
+        //);
+        //info!("IntMask: {:x} {:?}", self.rupt, self.gint);
+        //info!("IR: {:x} | INDEX: {:x}", self.ir, self.idx_val);
     }
 
     fn handle_ruptlock(&mut self, cycles: u16) {
@@ -526,7 +526,7 @@ impl <'a>AgcCpu<'a> {
 
                 self.ruptlock_count += cycles as i32;
                 if self.ruptlock_count > RUPT_LOCK_COUNT {
-                    debug!("RUPTLOCK Restart. Sending GOJ");
+                    //debug!("RUPTLOCK Restart. Sending GOJ");
                     self.set_unprog_seq(AgcUnprogSeq::GOJ);
                 }
             }
@@ -537,7 +537,7 @@ impl <'a>AgcCpu<'a> {
 
                 self.ruptlock_count -= cycles as i32;
                 if self.ruptlock_count < -RUPT_LOCK_COUNT {
-                    debug!("RUPTLOCK Restart. Sending GOJ");
+                    //debug!("RUPTLOCK Restart. Sending GOJ");
                     self.set_unprog_seq(AgcUnprogSeq::GOJ);
                 }
             }
@@ -547,7 +547,7 @@ impl <'a>AgcCpu<'a> {
     fn handle_nightwatch(&mut self, cycles: u16) {
         self.nightwatch_cycles += cycles as u32;
         if self.nightwatch_cycles >= NIGHTWATCH_TIME {
-            trace!("Checking Nightwatchman {:?}", self.nightwatch);
+            //trace!("Checking Nightwatchman {:?}", self.nightwatch);
             self.nightwatch_cycles = 0;
 
             // Check to see if there was any accesses to the
@@ -555,7 +555,7 @@ impl <'a>AgcCpu<'a> {
             // If not, then reboot the AGC
             if self.nightwatch == 0 {
                 // Send GOJAM unprogram to restart the AGC.
-                debug!("NIGHT WATCHMAN Restart. Sending GOJ");
+                //debug!("NIGHT WATCHMAN Restart. Sending GOJ");
                 self.set_unprog_seq(AgcUnprogSeq::GOJ);
             }
 
@@ -568,13 +568,13 @@ impl <'a>AgcCpu<'a> {
             self.tc_count = 0;
 
             // Send GOJAM unprogram to restart the AGC.
-            debug!("TC TRAP Restart. Sending GOJ");
+            //debug!("TC TRAP Restart. Sending GOJ");
             self.set_unprog_seq(AgcUnprogSeq::GOJ);
         } else if self.non_tc_count >= TCMONITOR_COUNT {
             self.non_tc_count = 0;
 
             // Send GOJAM unprogram to restart the AGC.
-            debug!("TC TRAP Restart. Sending GOJ");
+            //debug!("TC TRAP Restart. Sending GOJ");
             self.set_unprog_seq(AgcUnprogSeq::GOJ);
         }
     }
@@ -583,7 +583,7 @@ impl <'a>AgcCpu<'a> {
         self.mct_counter += cycles as f64 * 12.0;
 
         self.total_cycles += cycles as usize;
-        debug!("TotalCyles: {:?}", self.total_cycles * 12);
+        //debug!("TotalCyles: {:?}", self.total_cycles * 12);
 
         self.handle_nightwatch(cycles);
         self.handle_tc_trap();
@@ -620,7 +620,7 @@ impl <'a>AgcCpu<'a> {
         if !self.rupt_disabled() {
             self.rupt |= self.mem.check_interrupts();
             if self.rupt_pending() == true {
-                debug!("Handling Interrupt: {:?} {:x}", self.gint, self.rupt);
+                //debug!("Handling Interrupt: {:?} {:x}", self.gint, self.rupt);
                 self.handle_rupt();
                 self.is_irupt = true;
 
@@ -631,7 +631,7 @@ impl <'a>AgcCpu<'a> {
 
                 let addr: usize = (self.read(REG_PC) & 0xFFFF) as usize;
                 let i = disasm(addr as u16, inst_data).unwrap();
-                debug!("{:x?}++++", i);
+                //debug!("{:x?}++++", i);
             }
         }
 
@@ -648,7 +648,7 @@ impl <'a>AgcCpu<'a> {
         //
         //let addr : usize = ((self.read(REG_PC) & 0xFFFF)) as usize;
         //let i = disasm(addr as u16, inst_data).unwrap();
-        //info!("{:x?}------", i);
+        ////info!("{:x?}------", i);
     }
 
     fn step_programmed(&mut self) -> u16 {
@@ -658,7 +658,7 @@ impl <'a>AgcCpu<'a> {
 
         if !self.rupt_disabled() {
             if self.rupt_pending() == true {
-                debug!("Handling Interrupt: {:?} {:x}", self.gint, self.rupt);
+                //debug!("Handling Interrupt: {:?} {:x}", self.gint, self.rupt);
                 self.handle_rupt();
                 self.is_irupt = true;
 
@@ -667,7 +667,7 @@ impl <'a>AgcCpu<'a> {
 
                 let addr: usize = (self.read(REG_PC) & 0xFFFF) as usize;
                 let i = disasm(addr as u16, inst_data).unwrap();
-                debug!("{:x?}++++", i);
+                //debug!("{:x?}++++", i);
 
                 return 0;
             }
@@ -692,7 +692,7 @@ impl <'a>AgcCpu<'a> {
         //self.ir = self.read(next_pc as usize);
         self.update_pc(next_pc);
 
-        //debug!("PC: {:04x} {:04x} {:04x}", addr, self.ir, self.idx_val);
+        ////debug!("PC: {:04x} {:04x} {:04x}", addr, self.ir, self.idx_val);
         self.idx_val = 0;
 
         if self.ec_flag {
@@ -714,7 +714,7 @@ impl <'a>AgcCpu<'a> {
         // Check to see if we have an unprogrammed sequence instruction
         // that was performed. If we did, create a bubble before executing
         if self.unprog.len() > 0 {
-            //info!("StepUnprogrammed");
+            ////info!("StepUnprogrammed");
             self.step_unprogrammed()
         }
         else {

@@ -2,7 +2,7 @@ use super::AgcInst;
 use crate::cpu::AgcCpu;
 use crate::consts::cpu::*;
 
-use log::{error, warn};
+//use log::{error, warn};
 
 pub trait AgcControlFlow {
     fn tcf(&mut self, inst: &AgcInst) -> u16;
@@ -21,7 +21,7 @@ impl <'a>AgcControlFlow for AgcCpu<'a> {
             0 | 0xFFFF => {
                 let next_addr = inst.get_data_bits() & 0xFFF;
                 if (next_addr & 0xC00) == 0x0 {
-                    warn!("BZF jumping to non-fixed memory!");
+                    //warn!("BZF jumping to non-fixed memory!");
                 }
 
                 self.write(REG_PC, next_addr);
@@ -45,7 +45,7 @@ impl <'a>AgcControlFlow for AgcCpu<'a> {
         let k = inst.get_data_bits();
         match k & 0xC00 {
             0x000 => {
-                error!("Invalid encoding for BZMF");
+                //error!("Invalid encoding for BZMF");
                 return 0
             }
             _ => {}
@@ -110,7 +110,7 @@ impl <'a>AgcControlFlow for AgcCpu<'a> {
         let pc = self.read(REG_PC);
 
         //self.ir = self.read(k as usize);
-        //debug!("TCF: pc: {:x} | k: {:x} | ir: {:x}", pc, k, self.ir);
+        ////debug!("TCF: pc: {:x} | k: {:x} | ir: {:x}", pc, k, self.ir);
         //self.write(REG_PC, k);
         self.update_pc(k);
 

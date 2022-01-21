@@ -1,7 +1,7 @@
 use crate::utils::{generate_yaagc_packet, parse_yaagc_packet};
 
 use crossbeam_channel::{unbounded, Receiver, Sender};
-use log::{debug, warn};
+//use log::{debug, warn};
 
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
@@ -91,15 +91,15 @@ fn handle_stream_input(stream: &mut TcpStream, keypress_tx: &Sender<u16>) {
             Ok(_x) => match parse_yaagc_packet(buf) {
                 Some(res) => match res.0 {
                     0o15 => {
-                        debug!("Keypress: {:o}", res.1);
+                        //debug!("Keypress: {:o}", res.1);
                         let _res = keypress_tx.send(res.1);
                     }
                     0o32 => {
-                        debug!("Keypress (Proceed): {:o}", res.1);
+                        //debug!("Keypress (Proceed): {:o}", res.1);
                         let _res = keypress_tx.send(res.1 | 0o40000);
                     }
                     _ => {
-                        warn!("Unimplemented keypress: {:?}", res);
+                        //warn!("Unimplemented keypress: {:?}", res);
                     }
                 },
                 _ => {}
@@ -240,7 +240,7 @@ impl DskyDisplay {
     }
 
     pub fn read_keypress(&self) -> u16 {
-        debug!("DSKY: Reading keypress: {:?}", self.keypress_val);
+        //debug!("DSKY: Reading keypress: {:?}", self.keypress_val);
         self.keypress_val & 0x1F
     }
 
@@ -280,7 +280,7 @@ impl DskyDisplay {
     /// CHANNEL_DSALMOUT
     pub fn set_dsalmout_flags(&mut self, flags: u16) {
         if self.last_dsalmout != flags {
-            debug!("DSKY: Setting CHANNEL_DSALMOUT Flags: {:o}", flags);
+            //debug!("DSKY: Setting CHANNEL_DSALMOUT Flags: {:o}", flags);
             self.last_dsalmout = flags;
             self.dsky_tx
                 .send(generate_yaagc_packet(0o11, flags))
@@ -375,7 +375,7 @@ impl DskyDisplay {
             }
             _ => {}
         };
-        debug!("DSKY: {:?}", self.digit);
+        //debug!("DSKY: {:?}", self.digit);
     }
 }
 

@@ -1,6 +1,6 @@
 use crate::mem::AgcMemType;
 use crate::consts;
-use log::trace;
+//use log::trace;
 
 #[derive(Clone)]
 pub struct AgcRam {
@@ -58,12 +58,12 @@ impl AgcMemType for AgcRam {
         } else {
             self.banks[bank_idx][bank_offset] & 0x7FFF
         };
-        trace!(
-            "RAM Read: 0x{:x},0x{:x}: 0x{:x}",
-            bank_idx,
-            bank_offset,
-            res
-        );
+        //trace!(
+        //    "RAM Read: 0x{:x},0x{:x}: 0x{:x}",
+        //    bank_idx,
+        //    bank_offset,
+        //    res
+        //);
         res
     }
 
@@ -79,12 +79,12 @@ impl AgcMemType for AgcRam {
     ///  - `value` - u16 - Value to write to a given RAM address.
     ///
     fn write(&mut self, bank_idx: usize, bank_offset: usize, value: u16) {
-        trace!(
-            "RAM Write: 0x{:x},0x{:x}: 0x{:x}",
-            bank_idx,
-            bank_offset,
-            value
-        );
+        //trace!(
+        //    "RAM Write: 0x{:x},0x{:x}: 0x{:x}",
+        //    bank_idx,
+        //    bank_offset,
+        //    value
+        //);
         if bank_idx == 0x0 && bank_offset == consts::cpu::REG_A {
             self.banks[bank_idx][bank_offset] = value;
         } else if bank_idx == 0x0 && bank_offset == consts::cpu::REG_Q {
@@ -101,14 +101,14 @@ mod ramstd {
     const DEFAULT_SAVESTATE_FILENAME: &str = ".ragcstate";
     use super::{AgcRam, RAM_BANK_SIZE, RAM_NUM_BANKS};
 
-    use log::{trace, warn};
+    //use log::{trace, warn};
     use std::fs::File;
     use std::io::prelude::{Read, Write};
     use std::ops::Drop;
 
     impl Drop for AgcRam {
         fn drop(&mut self) {
-            trace!("AgcRam: Saving RAM state to file.");
+            //trace!("AgcRam: Saving RAM state to file.");
             let mut savefile = File::create(DEFAULT_SAVESTATE_FILENAME).unwrap();
             for bank in self.banks.iter() {
                 for value in bank.iter() {
@@ -137,11 +137,11 @@ mod ramstd {
                         ram.enable_savestate = true;
                     }
                     Err(x) => {
-                        trace!("Unable to open save state file: {:?}", x);
-                        warn!(
-                            "Unable to open save state file for AgcRam.
-                               Starting with blank memory."
-                        );
+                        //trace!("Unable to open save state file: {:?}", x);
+                        //warn!(
+                        //    "Unable to open save state file for AgcRam.
+                        //       Starting with blank memory."
+                        //);
                     }
                 }
             }

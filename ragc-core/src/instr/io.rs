@@ -3,7 +3,7 @@ use crate::cpu::AgcCpu;
 use crate::utils::{overflow_correction, sign_extend};
 use crate::consts::cpu::*;
 
-use log::debug;
+//use log::debug;
 
 pub trait AgcIo {
     fn ror(&mut self, inst: &AgcInst) -> u16 ;
@@ -146,13 +146,13 @@ impl <'a>AgcIo for AgcCpu<'a> {
         match k {
             2 => {
                 let n = self.read_s16(REG_A) | io_val;
-                debug!("WOR: {:06o} | {:06o} => {:06o}", k, io_val, n);
+                //debug!("WOR: {:06o} | {:06o} => {:06o}", k, io_val, n);
                 self.write_s16(REG_A, n);
                 self.write_io(k, n);
             }
             _ => {
                 let n = self.read_s15(REG_A) | (io_val & 0x7FFF);
-                debug!("WOR: {:06o} | {:06o} => {:06o}", k, io_val, n);
+                //debug!("WOR: {:06o} | {:06o} => {:06o}", k, io_val, n);
                 self.write_s15(REG_A, n);
                 self.write_io(k, n & 0x7FFF);
             }

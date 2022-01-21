@@ -1,4 +1,4 @@
-use log::error;
+//use log::error;
 //use std::result;
 //use crate::cpu::{AgcCpu};
 //use crate::mem::AgcMemoryMap;
@@ -37,10 +37,10 @@ fn disasm_extended(mut i: AgcInst) -> Result<AgcInst, &'static str> {
                     i.mnem = AgcMnem::EDRUPT;
                 }
                 _ => {
-                    error!(
-                        "Invalid Extrabits Encoding for {}: {:?}",
-                        opbits, i.extrabits
-                    );
+                    //error!(
+                    //    "Invalid Extrabits Encoding for {}: {:?}",
+                    //    opbits, i.extrabits
+                    //);
                     i.extrabits = None;
                     return Err("Invalid Extrabits Encoding");
                 }
@@ -76,10 +76,10 @@ fn disasm_extended(mut i: AgcInst) -> Result<AgcInst, &'static str> {
                     i.mnem = AgcMnem::DIM;
                 }
                 _ => {
-                    error!(
-                        "Invalid Extrabits Encoding for {}: {:?}",
-                        opbits, i.extrabits
-                    );
+                    //error!(
+                    //    "Invalid Extrabits Encoding for {}: {:?}",
+                    //    opbits, i.extrabits
+                    //);
                     i.extrabits = None;
                     return Err("Invalid Extrabits Encoding");
                 }
@@ -111,10 +111,10 @@ fn disasm_extended(mut i: AgcInst) -> Result<AgcInst, &'static str> {
             i.mnem = AgcMnem::MP;
         }
         _ => {
-            error!(
-                "Invalid value found. We didn't properly mask the opcode bits. {}",
-                opbits
-            );
+            //error!(
+            //    "Invalid value found. We didn't properly mask the opcode bits. {}",
+            //    opbits
+            //);
             return Err("Invalid Opcode Size");
         }
     }
@@ -149,10 +149,10 @@ fn disasm_simple(mut i: AgcInst) -> Result<AgcInst, &'static str> {
                     i.mnem = AgcMnem::TCF;
                 }
                 _ => {
-                    error!(
-                        "Invalid Extrabits Encoding for {}: {:?}",
-                        opbits, i.extrabits
-                    );
+                    //error!(
+                    //    "Invalid Extrabits Encoding for {}: {:?}",
+                    //    opbits, i.extrabits
+                    //);
                     i.extrabits = None;
                     return Err("Invalid Extrabits Encoding");
                 }
@@ -175,10 +175,10 @@ fn disasm_simple(mut i: AgcInst) -> Result<AgcInst, &'static str> {
                     i.mnem = AgcMnem::ADS;
                 }
                 _ => {
-                    error!(
-                        "Invalid Extrabits Encoding for {}: {:?}",
-                        opbits, i.extrabits
-                    );
+                    //error!(
+                    //    "Invalid Extrabits Encoding for {}: {:?}",
+                    //    opbits, i.extrabits
+                    //);
                     i.extrabits = None;
                     return Err("Invalid Extrabits Encoding");
                 }
@@ -214,10 +214,10 @@ fn disasm_simple(mut i: AgcInst) -> Result<AgcInst, &'static str> {
                     i.mnem = AgcMnem::XCH;
                 }
                 _ => {
-                    error!(
-                        "Invalid Extrabits Encoding for {}: {:?}",
-                        opbits, i.extrabits
-                    );
+                    //error!(
+                    //    "Invalid Extrabits Encoding for {}: {:?}",
+                    //    opbits, i.extrabits
+                    //);
                     i.extrabits = None;
                     return Err("Invaid Extrabits Encoding");
                 }
@@ -231,10 +231,10 @@ fn disasm_simple(mut i: AgcInst) -> Result<AgcInst, &'static str> {
             i.mnem = AgcMnem::MASK;
         }
         _ => {
-            error!(
-                "Invalid value found. We didn't properly mask the opcode bits. {}",
-                opbits
-            );
+            //error!(
+            //    "Invalid value found. We didn't properly mask the opcode bits. {}",
+            //    opbits
+            //);
             return Err("Invalid Opcode Size");
         }
     }

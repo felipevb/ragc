@@ -1,7 +1,7 @@
 use crate::mem::AgcMemType;
 use crate::consts::special::*;
 use heapless::spsc::Producer;
-use log::{error, warn};
+//use log::{error, warn};
 
 // =============================================================================
 // Public Structures
@@ -43,7 +43,7 @@ impl AgcSpecialRegs {
 impl AgcMemType for AgcSpecialRegs {
     fn read(&self, bank_idx: usize, bank_offset: usize) -> u16 {
         if bank_idx != 0 {
-            error!("Accessing SpecialRegs on a non-zero bank. 0x{:x}", bank_idx);
+            //error!("Accessing SpecialRegs on a non-zero bank. 0x{:x}", bank_idx);
             return 0;
         }
 
@@ -60,15 +60,15 @@ impl AgcMemType for AgcSpecialRegs {
             // Inlink and Outlink Registers
             SG_INLINK => self.inlink,
             SG_OUTLINK => {
-                error!("Reading from outlink, which is known to not be used!");
+                //error!("Reading from outlink, which is known to not be used!");
                 0
             }
             SG_CDUXCMD | SG_CDUYCMD | SG_CDUZCMD => 0,
             _ => {
-                error!(
-                    "Accessing invalid SpecialRegister value: 0o{:o}",
-                    bank_offset
-                );
+                //error!(
+                //    "Accessing invalid SpecialRegister value: 0o{:o}",
+                //    bank_offset
+                //);
                 0
             }
         }
@@ -79,10 +79,10 @@ impl AgcMemType for AgcSpecialRegs {
             // Block of Read Only Registers. Send a warning mentioning how the
             // Execution is trying to write to special read only registers
             SG_CDUX | SG_CDUY | SG_CDUZ | SG_OPTX | SG_OPTY | SG_PIPAX | SG_PIPAY | SG_PIPAZ => {
-                warn!(
-                    "Attempting to write to Read-Only Special Registers Address: {:o}",
-                    bank_offset
-                );
+                //warn!(
+                //    "Attempting to write to Read-Only Special Registers Address: {:o}",
+                //    bank_offset
+                //);
             }
 
             // Inlink and Outlink Registers
@@ -90,11 +90,11 @@ impl AgcMemType for AgcSpecialRegs {
                 self.inlink = value & 0x7FFF;
             }
             SG_OUTLINK => {
-                error!("Writing to outlink, which is known to not be used!");
+                //error!("Writing to outlink, which is known to not be used!");
             }
 
             _ => {
-                error!("Unimplemented Special Write: {:o}", bank_offset);
+                //error!("Unimplemented Special Write: {:o}", bank_offset);
             }
         }
     }

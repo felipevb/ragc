@@ -14,7 +14,7 @@ pub use io::AgcIoSpace;
 
 use heapless::spsc::Producer;
 
-use log::{error, trace};
+//use log::{error, trace};
 
 use self::periph::AgcIoPeriph;
 
@@ -159,7 +159,7 @@ impl<'a> AgcMemoryMap<'a> {
     }
 
     pub fn write(&mut self, idx: usize, val: u16) {
-        trace!("Write: 0x{:x}: 0o{:o}", idx, val);
+        //trace!("Write: 0x{:x}: 0o{:o}", idx, val);
         match idx {
             0o00..=0o17 => {
                 self.regs.write(0, idx, val);
@@ -182,7 +182,7 @@ impl<'a> AgcMemoryMap<'a> {
             }
             memmap::AGC_MM_FIXED_START..=memmap::AGC_MM_FIXED_END => {
                 if self.rom_debug == false {
-                    error!("Writing to ROM location: {:x}", idx);
+                    //error!("Writing to ROM location: {:x}", idx);
                     return;
                 }
 
@@ -194,7 +194,7 @@ impl<'a> AgcMemoryMap<'a> {
                 }
             }
             _ => {
-                error!("Unimplemented Memory Map Write (Addr: 0x{:x}", idx);
+                //error!("Unimplemented Memory Map Write (Addr: 0x{:x}", idx);
             }
         }
     }
@@ -214,7 +214,7 @@ impl<'a> AgcMemoryMap<'a> {
             }
             memmap::AGC_MM_FIXED_START..=memmap::AGC_MM_FIXED_END => {
                 if (idx >> 10) == 1 {
-                    trace!("Reading from Windowed ROM: {:x} {:x}", self.regs.fbank, idx);
+                    //trace!("Reading from Windowed ROM: {:x} {:x}", self.regs.fbank, idx);
                     match self.regs.fbank {
                         0o30..=0o33 => {
                             if self.superbank == true {
@@ -226,7 +226,7 @@ impl<'a> AgcMemoryMap<'a> {
                         }
                         0o34..=0o37 => {
                             if self.superbank == true {
-                                error!("Inaccesible Bank with Superbank: {:x}", self.regs.fbank);
+                                //error!("Inaccesible Bank with Superbank: {:x}", self.regs.fbank);
                                 0
                             } else {
                                 self.rom.read(self.regs.fbank, (idx & 0x3ff) as usize)
@@ -236,17 +236,17 @@ impl<'a> AgcMemoryMap<'a> {
                     }
                 //self.rom.read(self.regs.fbank, (idx & 0x3ff) as usize)
                 } else {
-                    trace!("Reading from Fixed ROM: {:x}", idx);
+                    //trace!("Reading from Fixed ROM: {:x}", idx);
                     self.rom.read(idx >> 10, (idx & 0x3ff) as usize)
                 }
             }
             _ => {
-                error!("Unimplemented Memory Map Read (Addr: 0x{:x}", idx);
+                //error!("Unimplemented Memory Map Read (Addr: 0x{:x}", idx);
                 0
             }
         };
 
-        trace!("Read: 0x{:x}: 0o{:o}", idx, val);
+        //trace!("Read: 0x{:x}: 0o{:o}", idx, val);
         val
     }
 

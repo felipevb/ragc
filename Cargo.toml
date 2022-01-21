@@ -4,5 +4,10 @@ members = [
     "ragc-ropes",
     "ragc-core",
     "ragc",
-    "ragc-vagc"
+    "ragc-vagc",
+    "ragc-stm32"
+]
+exclude = [
+    "ragc-stm32h7-embassy",
+    "stm32-example"
 ]
