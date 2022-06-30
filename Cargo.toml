@@ -4,5 +4,6 @@ members = [
     "ragc-ropes",
     "ragc-core",
     "ragc",
-    "ragc-vagc"
+    "ragc-vagc",
+    "ragc-periph"
 ]

@@ -1,0 +1,17 @@
+[package]
+name = "ragc-periph"
+version = "0.1.0"
+authors = ["Felipe Vilas-Boas"]
+edition = "2018"
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+ragc-core = { path = "../ragc-core" }
+heapless = { optional = true }
+defmt = { optional = true }
+crossbeam-channel = { optional = true }
+
+[features]
+default = ["heapless-periph"]
+heapless-periph = ["heapless"]
+vagc-periph = ["crossbeam-channel"]
