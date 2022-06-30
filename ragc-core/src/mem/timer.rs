@@ -9,8 +9,6 @@ use log::{debug, error};
 #[derive(Clone)]
 pub struct AgcTimers {
     time6_enable: bool,
-    mct_counter: u16,
-    timer_counter: u8,
 
     // Scaler
     scaler: u32,
@@ -57,8 +55,6 @@ impl AgcTimers {
         Self {
             // Internal Counters to keep state of what is going on
             // with the timers
-            mct_counter: 0,
-            timer_counter: 0,
             downrupt: 1,
             downrupt_flags: 0,
             time6_enable: false,
