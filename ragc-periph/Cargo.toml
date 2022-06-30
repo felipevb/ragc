@@ -10,8 +10,10 @@ ragc-core = { path = "../ragc-core" }
 heapless = { optional = true }
 defmt = { optional = true }
 crossbeam-channel = { optional = true }
+log = { optional = true }
 
 [features]
-default = ["heapless-periph"]
+default = []
+std = []
 heapless-periph = ["heapless"]
-vagc-periph = ["crossbeam-channel"]
+vagc-periph = ["crossbeam-channel", "log"]

@@ -6,6 +6,7 @@ use log::{debug, warn};
 
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
+use std::println;
 
 pub struct DskyDisplay {
     digit: [u8; 15],

@@ -1,6 +1,7 @@
 #![no_std]
 
-mod utils;
+#[cfg(feature = "std")]
+extern crate std;
 
 #[cfg(feature = "heapless-periph")]
 mod heapless;
@@ -8,9 +9,10 @@ mod heapless;
 #[cfg(feature = "heapless-periph")]
 pub use crate::heapless::*;
 
-#[cfg(feature = "vagc_periph")]
+#[cfg(feature = "vagc-periph")]
 mod vagc;
 
-#[cfg(feature = "vagc_periph")]
+#[cfg(feature = "vagc-periph")]
 pub use vagc::*;
 
+mod utils;
