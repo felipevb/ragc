@@ -8,20 +8,16 @@ impl AGCPacket {
     pub fn new(data: &[u8; 4]) -> Self {
         let res = parse_yaagc_packet(*data);
         match res {
-            Some((channel, value)) => {
-                AGCPacket {
-                    io_addr: channel as usize,
-                    io_value: value,
-                    _hw_packet: false
-                }
-            }
-            _ => {
-                AGCPacket {
-                    io_addr: 0x0,
-                    io_value: 0x0,
-                    _hw_packet: false
-                }
-            }
+            Some((channel, value)) => AGCPacket {
+                io_addr: channel as usize,
+                io_value: value,
+                _hw_packet: false,
+            },
+            _ => AGCPacket {
+                io_addr: 0x0,
+                io_value: 0x0,
+                _hw_packet: false,
+            },
         }
     }
 
@@ -29,8 +25,6 @@ impl AGCPacket {
         generate_yaagc_packet(self.io_addr, self.io_value)
     }
 }
-
-
 
 pub fn generate_yaagc_packet(channel: usize, value: u16) -> [u8; 4] {
     [
