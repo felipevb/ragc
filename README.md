@@ -13,6 +13,7 @@ is the same as any standard Cargo application / library. To compile `ragc` the
 following commmand is used:
 
 ```rust
+cd ./ragc
 cargo build
 ```
 
@@ -21,6 +22,7 @@ the `--release` flag is needed. This flag instruct cargo to build the project as
 a release build. The following command demonstrates this:
 
 ```rust
+cd ./ragc
 cargo build --release
 ```
 
@@ -31,6 +33,7 @@ prebuilt images provided by the `ragc-ropes` package. To run a prebuilt ROM
 image, the following command demonstrates how to run the RETREAD50 program
 
 ```bash
+cd ./ragc
 cargo run -- retread50
 ```
 
@@ -55,6 +58,7 @@ Addtional flags and options can be used while running `ragc`.
   specify `RUST_LOG` environment variable with the level of logging desired.
   For example:
     ```rust
+    cd ./ragc
     RUST_LOG=info cargo run --release file (binary path)
     ```
 ## Supporting Peripherials
