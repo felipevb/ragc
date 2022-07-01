@@ -1,4 +1,4 @@
-use super::generate_yaagc_packet;
+use yaagc_protocol::agc::generate_yaagc_packet;
 
 use crossbeam_channel::{unbounded, Receiver, Sender};
 use std::io::Write;
