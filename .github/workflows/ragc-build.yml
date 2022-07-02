@@ -15,7 +15,7 @@ jobs:
       - name: Check ROM files from checkout
         run: ls -al ./ragc-ropes/res
       - name: Build Rust Project (Debug)
-        run: cargo build
+        run: cd ragc && cargo build
 
   run-ragc-tests:
     runs-on: ubuntu-latest
@@ -38,4 +38,4 @@ jobs:
       - name: Check ROM files from checkout
         run: ls -al ./ragc-ropes/res
       - name: Run Test ${{matrix.test_name}}
-        run: cargo test ${{matrix.test_name}}
+        run: cd ragc && cargo test ${{matrix.test_name}}
