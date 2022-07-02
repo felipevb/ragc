@@ -1,4 +1,4 @@
-use super::{generate_yaagc_packet, parse_yaagc_packet};
+use yaagc_protocol::agc::{generate_yaagc_packet, parse_yaagc_packet};
 use crate::utils::{get_7seg, get_7seg_value};
 
 use crossbeam_channel::{unbounded, Receiver, Sender};
