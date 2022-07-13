@@ -1,0 +1,28 @@
+[package]
+edition = "2021"
+name = "rp2040-agc"
+version = "0.1.0"
+
+[dependencies]
+embassy = { git = "https://github.com/embassy-rs/embassy", features = [] }
+embassy-rp = { git = "https://github.com/embassy-rs/embassy", features = ["unstable-traits", "nightly", "unstable-pac"] }
+
+heapless = "*"
+ragc-core = { path = "../../ragc-core" }
+ragc-ropes = { path = "../../ragc-ropes" }
+ragc-periph = { path = "../../ragc-periph", features = ["heapless-periph"] }
+
+
+atomic-polyfill = "0.1.5"
+cortex-m = "0.7.3"
+cortex-m-rt = "0.7.0"
+panic-probe = { version = "0.3" }
+futures = { version = "0.3.17", default-features = false, features = ["async-await", "cfg-target-has-atomic", "unstable"] }
+display-interface-spi = "0.4.1"
+embedded-graphics = "0.7.1"
+st7789 = "0.6.1"
+display-interface = "0.4.1"
+byte-slice-cast = { version = "1.2.0", default-features = false }
+
+embedded-hal-1 = { package = "embedded-hal", version = "1.0.0-alpha.8" }
+embedded-hal-async = { version = "0.1.0-alpha.1" }
